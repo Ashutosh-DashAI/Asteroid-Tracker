@@ -1,79 +1,189 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-// prisma/schema.prisma
-
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql" // Assuming PostgreSQL for robust containerized deployment
-  url      = env("DATABASE_URL")
-}
-
+// ============================================
+// USER MODEL
+// ============================================
 model User {
-  id               String            @id @default(uuid())
-  email            String            @unique
-  passwordHash     String            // Hashed passwords for security
-  name             String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  
-  // Relations
-  watchedAsteroids WatchedAsteroid[]
-  alerts           Alert[]
-  chatMessages     ChatMessage[]
-}
-
-model WatchedAsteroid {
-  id                  String   @id @default(uuid())
-  userId              String
-  neoReferenceId      String   // The ID provided by the NASA NeoWs API
-  name                String
-  customAlertDistance Float?   // Optional custom threshold for alerts
-  riskScore           Float?   // Cached/Calculated risk score based on hazard, diameter, etc.
-  createdAt           DateTime @default(now())
+  id                String              @id @default(uuid())
+  name              String
+  username          String              @unique
+  email             String              @unique
+  passwordHash      String
+  avatar            String?
+  bio               String?
+  role              UserRole            @default(USER)
+  isVerified        Boolean             @default(false)
+  isBanned          Boolean             @default(false)
+  resetTokenHash    String?
+  resetTokenExpire  DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 
   // Relations
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokens     RefreshToken[]
+  followedBy        Follow[]            @relation("follower")
+  following         Follow[]            @relation("following")
+  sentMessages      Message[]           @relation("sender")
+  receivedMessages  Message[]           @relation("receiver")
+  conversationsAs1  Conversation[]      @relation("participant1")
+  conversationsAs2  Conversation[]      @relation("participant2")
+  notifications     Notification[]
+  bookmarks         Bookmark[]
+  createdChats      ChatMessage[]
 
-  @@unique([userId, neoReferenceId]) // Prevents duplicate tracking of the same asteroid by the same user
+  @@index([email])
+  @@index([username])
 }
 
-model Alert {
+enum UserRole {
+  USER
+  ADMIN
+}
+
+// ============================================
+// REFRESH TOKEN MODEL
+// ============================================
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ============================================
+// FOLLOW MODEL
+// ============================================
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  // Relations
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// ============================================
+// CONVERSATION MODEL
+// ============================================
+model Conversation {
   id               String   @id @default(uuid())
-  userId           String
-  neoReferenceId   String
-  message          String   // e.g., "Asteroid 433 Eros is making a close approach!"
-  isRead           Boolean  @default(false)
-  approachDate     DateTime 
+  participantOneId String
+  participantTwoId String
   createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Relations
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  participantOne   User     @relation("participant1", fields: [participantOneId], references: [id], onDelete: Cascade)
+  participantTwo   User     @relation("participant2", fields: [participantTwoId], references: [id], onDelete: Cascade)
+  messages         Message[]
+
+  @@unique([participantOneId, participantTwoId])
+  @@index([participantOneId])
+  @@index([participantTwoId])
 }
 
-// Bonus: Real-time Chat Thread
+// ============================================
+// MESSAGE MODEL
+// ============================================
+model Message {
+  id             String       @id @default(uuid())
+  senderId       String
+  receiverId     String
+  conversationId String
+  content        String
+  isRead         Boolean      @default(false)
+  readAt         DateTime?
+  deletedBy      String?      // Track who deleted the message
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Relations
+  sender         User         @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver       User         @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  bookmark       Bookmark?
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+// ============================================
+// NOTIFICATION MODEL
+// ============================================
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // Relations
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+enum NotificationType {
+  FOLLOW
+  MESSAGE
+  PASSWORD_CHANGED
+  SYSTEM
+}
+
+// ============================================
+// BOOKMARK MODEL
+// ============================================
+model Bookmark {
+  id        String   @id @default(uuid())
+  userId    String
+  messageId String   @unique
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, messageId])
+  @@index([userId])
+}
+
+// ============================================
+// CHAT MESSAGE MODEL (for group/public chat)
+// ============================================
 model ChatMessage {
-  id               String   @id @default(uuid())
-  userId           String
-  neoReferenceId   String   // Represents the specific asteroid thread
-  message          String
-  createdAt        DateTime @default(now())
+  id        String   @id @default(uuid())
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
 
   // Relations
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
