@@ -75,10 +75,8 @@ export const authService = {
         bio: user.bio,
         isVerified: user.isVerified,
       },
-      tokens: {
-        accessToken,
-        refreshToken,
-      },
+      token: accessToken,
+      refreshToken,
     };
   },
 
@@ -138,10 +136,8 @@ export const authService = {
         bio: user.bio,
         isVerified: user.isVerified,
       },
-      tokens: {
-        accessToken,
-        refreshToken,
-      },
+      token: accessToken,
+      refreshToken,
     };
   },
 
@@ -191,7 +187,7 @@ export const authService = {
     });
 
     return {
-      accessToken: newAccessToken,
+      token: newAccessToken,
     };
   },
 

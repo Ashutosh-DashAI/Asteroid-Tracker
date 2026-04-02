@@ -16,6 +16,7 @@ type OnlineUsers = Map<
 >;
 
 const onlineUsers: OnlineUsers = new Map();
+let ioRef: Server | null = null;
 
 export const setupSocket = (httpServer: HTTPServer) => {
   const io = new Server(httpServer, {
@@ -25,8 +26,9 @@ export const setupSocket = (httpServer: HTTPServer) => {
     },
   });
 
-  // Authentication middleware
-  io.use((socket: AuthenticatedSocket, next) => {
+  ioRef = io;
+
+  const authenticate = (socket: AuthenticatedSocket, next: (err?: Error) => void) => {
     const token = socket.handshake.auth.token;
 
     if (!token) {
@@ -41,9 +43,48 @@ export const setupSocket = (httpServer: HTTPServer) => {
 
     socket.userId = payload.userId;
     next();
+  };
+
+  io.use(authenticate);
+
+  io.of("/alerts").use(authenticate).on("connection", (socket: AuthenticatedSocket) => {
+    socket.join(`user:${socket.userId}`);
   });
 
-  // Connection handler
+  io.of("/chat").use(authenticate).on("connection", (socket: AuthenticatedSocket) => {
+    socket.on("join_room", (payload: { nasaId?: string }) => {
+      if (payload?.nasaId) socket.join(`asteroid:${payload.nasaId}`);
+      else socket.join("global");
+    });
+
+    socket.on("leave_room", (payload: { nasaId?: string }) => {
+      if (payload?.nasaId) socket.leave(`asteroid:${payload.nasaId}`);
+      else socket.leave("global");
+    });
+
+    socket.on("send_message", async (payload: { content: string; nasaId?: string }) => {
+      try {
+        const clean = payload.content.replace(/<[^>]*>/g, "").trim().slice(0, 500);
+        if (!clean) return;
+        let asteroidId: string | null = null;
+        if (payload.nasaId) {
+          const asteroid = await prisma.asteroid.findUnique({ where: { nasaId: payload.nasaId } });
+          if (!asteroid) return;
+          asteroidId = asteroid.id;
+        }
+        const saved = await prisma.chatMessage.create({
+          data: { userId: socket.userId!, asteroidId, content: clean },
+          include: { user: { select: { username: true } } },
+        });
+        const room = payload.nasaId ? `asteroid:${payload.nasaId}` : "global";
+        io.of("/chat").to(room).emit("new_message", saved);
+      } catch (_err) {
+        socket.emit("message:error", { message: "Failed to send chat message" });
+      }
+    });
+  });
+
+  // Existing default namespace connection handler
   io.on("connection", (socket: AuthenticatedSocket) => {
     console.log(`User connected: ${socket.userId} (${socket.id})`);
 
@@ -154,4 +195,9 @@ export const setupSocket = (httpServer: HTTPServer) => {
 
 export const getOnlineUsers = () => {
   return Array.from(onlineUsers.values());
+};
+
+export const emitNewAlert = (userId: string, alert: unknown) => {
+  if (!ioRef) return;
+  ioRef.of("/alerts").to(`user:${userId}`).emit("new_alert", alert);
 };

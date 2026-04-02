@@ -17,6 +17,7 @@ export const env = {
 
   // CORS
   CORS_ORIGIN: process.env.CORS_ORIGIN || "http://localhost:3000",
+  CLIENT_URL: process.env.CLIENT_URL || "http://localhost:5173",
 
   // App
   APP_NAME: "ASTRA",
@@ -32,6 +33,12 @@ export const env = {
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000", 10),
   RATE_LIMIT_MAX_REQUESTS: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100", 10),
+
+  // NASA API
+  NASA_API_KEY: process.env.NASA_API_KEY || "DEMO_KEY",
+  NASA_NEOWS_API_URL: "https://api.nasa.gov/neo/rest/v1",
+  NASA_API_CACHE_DURATION: parseInt(process.env.NASA_API_CACHE_DURATION || "3600000", 10), // 1 hour in ms
+  SYNC_INTERVAL_HOURS: parseInt(process.env.SYNC_INTERVAL_HOURS || "6", 10),
 };
 
 export default env;

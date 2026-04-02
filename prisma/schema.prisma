@@ -39,6 +39,8 @@ model User {
   notifications     Notification[]
   bookmarks         Bookmark[]
   createdChats      ChatMessage[]
+  watchedAsteroids  WatchedAsteroid[]
+  alerts            Alert[]
 
   @@index([email])
   @@index([username])
@@ -179,11 +181,103 @@ model Bookmark {
 model ChatMessage {
   id        String   @id @default(uuid())
   userId    String
+  asteroidId String?
   content   String
   createdAt DateTime @default(now())
 
   // Relations
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asteroid  Asteroid? @relation(fields: [asteroidId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([asteroidId])
+}
+
+// ============================================
+// ASTEROID MODEL
+// ============================================
+model Asteroid {
+  id                    String            @id @default(uuid())
+  nasaId                String            @unique
+  name                  String
+  estimatedDiameterMinKm Float
+  estimatedDiameterMaxKm Float
+  isPotentiallyHazardous Boolean
+  absoluteMagnitude     Float
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  // Relations
+  closeApproaches       CloseApproach[]
+  watchedBy             WatchedAsteroid[]
+  alerts                Alert[]
+  chatMessages          ChatMessage[]
+
+  @@index([nasaId])
+  @@index([isPotentiallyHazardous])
+}
+
+// ============================================
+// CLOSE APPROACH MODEL
+// ============================================
+model CloseApproach {
+  id                  String    @id @default(uuid())
+  asteroidId          String
+  closeApproachDate   DateTime
+  relativeVelocityKmS Float
+  missDistanceKm      Float
+  orbitingBody        String
+  riskScore           Float
+  createdAt           DateTime  @default(now())
+
+  // Relations
+  asteroid            Asteroid  @relation(fields: [asteroidId], references: [id], onDelete: Cascade)
+  alerts              Alert[]
+
+  @@index([asteroidId])
+  @@index([closeApproachDate])
+  @@index([riskScore])
+  @@unique([asteroidId, closeApproachDate])
+}
+
+// ============================================
+// WATCHED ASTEROID MODEL (User bookmarks asteroids)
+// ============================================
+model WatchedAsteroid {
+  id               String   @id @default(uuid())
+  userId           String
+  asteroidId       String
+  alertThresholdKm Float    @default(1000000)
+  createdAt        DateTime @default(now())
+
+  // Relations
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asteroid         Asteroid @relation(fields: [asteroidId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, asteroidId])
+  @@index([userId])
+  @@index([asteroidId])
+}
+
+// ============================================
+// ALERT MODEL
+// ============================================
+model Alert {
+  id              String        @id @default(uuid())
+  userId          String
+  asteroidId      String
+  closeApproachId String
+  message         String
+  isRead          Boolean       @default(false)
+  triggeredAt     DateTime      @default(now())
+
+  // Relations
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asteroid        Asteroid      @relation(fields: [asteroidId], references: [id], onDelete: Cascade)
+  closeApproach   CloseApproach @relation(fields: [closeApproachId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([asteroidId])
+  @@index([closeApproachId])
+  @@index([isRead])
 }

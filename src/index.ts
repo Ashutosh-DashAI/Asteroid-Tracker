@@ -12,6 +12,11 @@ import chatRoutes from "./routes/chat.routes";
 import notificationRoutes from "./routes/notification.routes";
 import bookmarkRoutes from "./routes/bookmark.routes";
 import adminRoutes from "./routes/admin.routes";
+import asteroidRoutes from "./routes/asteroid.routes";
+import neoRoutes from "./routes/neo.routes";
+import watchlistRoutes from "./routes/watchlist.routes";
+import alertsRoutes from "./routes/alerts.routes";
+import { scheduleSync, syncNEOFeedToDB } from "./services/syncService";
 
 // Import middleware
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
@@ -47,6 +52,10 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/bookmarks", bookmarkRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/asteroids", asteroidRoutes);
+app.use("/api/neo", neoRoutes);
+app.use("/api/watchlist", watchlistRoutes);
+app.use("/api/alerts", alertsRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
@@ -58,6 +67,10 @@ app.use(errorHandler);
 httpServer.listen(port, () => {
   console.log(`🚀 ASTRA server running on http://localhost:${port}`);
   console.log(`Environment: ${env.NODE_ENV}`);
+  scheduleSync();
+  syncNEOFeedToDB(7).catch((err) => {
+    console.error("Initial NEO sync failed", err);
+  });
 });
 
 export default app;

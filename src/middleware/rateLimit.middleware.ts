@@ -3,9 +3,17 @@ import env from "../config/env";
 
 // General rate limiter
 export const generalLimiter = rateLimit({
-  windowMs: env.RATE_LIMIT_WINDOW_MS, // 15 minutes
-  max: env.RATE_LIMIT_MAX_REQUESTS, // Limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: "Too many requests from this IP, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+export const neoLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: "Too many NEO requests, please try again in a minute.",
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -13,7 +21,7 @@ export const generalLimiter = rateLimit({
 // Strict rate limiter for auth endpoints
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 requests per windowMs
+  max: 100, // Limit each IP to 100 requests per windowMs (increased for development)
   message: "Too many login attempts, please try again after 15 minutes.",
   standardHeaders: true,
   legacyHeaders: false,

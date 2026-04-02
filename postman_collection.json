@@ -1,0 +1,87 @@
+{
+  "info": {
+    "_postman_id": "3e7f0f58-6f89-41d0-a870-17d4cbbe04df",
+    "name": "Cosmic Watch Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3001" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/auth/register",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Test User\",\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"Password123!\"\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.expect([200,201]).to.include(pm.response.code);"] } }]
+        }
+      ]
+    },
+    {
+      "name": "NEO Feed",
+      "item": [
+        {
+          "name": "Feed",
+          "request": { "method": "GET", "url": "{{base_url}}/api/neo/feed?page=1&limit=20" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.expect(pm.response.code).to.eql(200);"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Watchlist",
+      "item": [
+        {
+          "name": "Add Watch",
+          "event": [
+            { "listen": "prerequest", "script": { "exec": ["pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('token') });"] } },
+            { "listen": "test", "script": { "exec": ["pm.expect([200,201]).to.include(pm.response.code);"] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/watchlist",
+            "body": { "mode": "raw", "raw": "{\n  \"nasaId\": \"3542519\",\n  \"alertThresholdKm\": 900000\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "List Alerts",
+          "event": [
+            { "listen": "prerequest", "script": { "exec": ["pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('token') });"] } },
+            { "listen": "test", "script": { "exec": ["pm.expect(pm.response.code).to.eql(200);"] } }
+          ],
+          "request": { "method": "GET", "url": "{{base_url}}/api/alerts?page=1&limit=20" }
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "Post Message",
+          "event": [
+            { "listen": "prerequest", "script": { "exec": ["pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('token') });"] } },
+            { "listen": "test", "script": { "exec": ["pm.expect([200,201]).to.include(pm.response.code);"] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/chat",
+            "body": { "mode": "raw", "raw": "{\n  \"content\": \"Monitoring asteroid thread\",\n  \"nasaId\": \"3542519\"\n}" }
+          }
+        }
+      ]
+    }
+  ]
+}
