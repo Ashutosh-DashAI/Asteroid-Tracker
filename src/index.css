@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Orbitron:wght@500;700;800&display=swap');
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+:root {
+  --space-black: #0a0a0f;
+  --deep-space: #0d0d1a;
+  --nebula-blue: #0f1b3d;
+  --cosmic-blue: #1a2f6e;
+  --star-blue: #2563eb;
+  --neon-cyan: #00d4ff;
+  --neon-purple: #7c3aed;
+  --asteroid-orange: #f97316;
+  --hazard-red: #ef4444;
+  --safe-green: #22c55e;
+  --watch-yellow: #eab308;
+  --warning-orange: #f97316;
+  --critical-red: #ef4444;
+  --text-primary: #e2e8f0;
+  --text-muted: #64748b;
+  --glass-bg: rgba(15, 27, 61, 0.6);
+  --glass-border: rgba(0, 212, 255, 0.15);
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+  html, body, #root { min-height: 100%; }
+  body {
+    margin: 0;
+    background: var(--space-black);
+    color: var(--text-primary);
+    font-family: Inter, sans-serif;
+    overflow-x: hidden;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: Orbitron, sans-serif;
+    text-shadow: 0 0 12px rgba(0, 212, 255, 0.35);
+  }
+  code, pre { font-family: 'JetBrains Mono', monospace; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--deep-space); }
+  ::-webkit-scrollbar-thumb { background: rgba(0, 212, 255, 0.4); border-radius: 9999px; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(0, 212, 255, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.35); }
+}
+@keyframes orbitalSpin { to { transform: rotate(360deg); } }
+@keyframes dotPulse {
+  0%, 100% { transform: scale(0.8); opacity: 0.75; }
+  50% { transform: scale(1); opacity: 1; }
+}
+@keyframes shimmer {
+  0% { background-position: -300px 0; }
+  100% { background-position: calc(300px + 100%) 0; }
+}
+@keyframes tickerScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes urgentPulse {
+  0%, 100% { color: var(--hazard-red); opacity: 1; }
+  50% { color: #ff8b8b; opacity: 0.85; }
+}
+
+.glass-card {
+  backdrop-filter: blur(12px);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 0 24px rgba(0, 212, 255, 0.12);
+}
+.interactive-glow:hover { animation: glowPulse 1.6s ease infinite; }
+.skeleton {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.14) 50%, rgba(255, 255, 255, 0.04) 75%);
+  background-size: 300px 100%;
+  animation: shimmer 1.6s linear infinite;
+}
