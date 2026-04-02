@@ -1,0 +1,1 @@
+import{f as t}from"./index-CKr3Wytv.js";const a=async()=>{try{return(await t.get("/watchlist")).data}catch(a){return(t=>{var a,r;throw new Error((null==(r=null==(a=null==t?void 0:t.response)?void 0:a.data)?void 0:r.message)||"Request failed")})(a)}};export{a as g};

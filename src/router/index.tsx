@@ -42,9 +42,9 @@ export default function AppRouter() {
         <Route path="/login" element={<AuthRoute><LoginPage /></AuthRoute>} />
         <Route path="/signup" element={<AuthRoute><SignupPage /></AuthRoute>} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-          <Route path="/dashboard" element={<AnimatedPage><Dashboard /></AnimatedPage>} />
-          <Route path="/neo" element={<AnimatedPage><NEOFeed /></AnimatedPage>} />
-          <Route path="/neo/:nasaId" element={<AnimatedPage><AsteroidDetail /></AnimatedPage>} />
+        <Route path="/dashboard" element={<AnimatedPage><Dashboard /></AnimatedPage>} />
+          <Route path="/feed" element={<AnimatedPage><NEOFeed /></AnimatedPage>} />
+          <Route path="/asteroid/:id" element={<AnimatedPage><AsteroidDetail /></AnimatedPage>} />
           <Route path="/watchlist" element={<AnimatedPage><Watchlist /></AnimatedPage>} />
           <Route path="/alerts" element={<AnimatedPage><Alerts /></AnimatedPage>} />
           <Route path="/orbit" element={<AnimatedPage><OrbitViewer /></AnimatedPage>} />

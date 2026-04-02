@@ -1,33 +1,103 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getWatchlist, removeFromWatchlist, updateThreshold } from '@/api/watchlist.api';
-import GlassCard from '@/components/ui/GlassCard';
-import CountdownTimer from '@/components/ui/CountdownTimer';
-import RiskBadge from '@/components/ui/RiskBadge';
-import { useToast } from '@/context/ToastContext';
+import React, { useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Star } from 'lucide-react';
+import { useAsteroidsStore } from '@/store/useAsteroidsStore';
+import AsteroidCard from '@/components/ui/AsteroidCard';
+import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { useNavigate } from 'react-router-dom';
 
 export default function Watchlist() {
-  const qc = useQueryClient();
-  const { show } = useToast();
-  const { data } = useQuery({ queryKey: ['watchlist'], queryFn: getWatchlist });
-  const remove = useMutation({ mutationFn: (id: string) => removeFromWatchlist(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['watchlist'] }) });
-  const update = useMutation({ mutationFn: ({ id, km }: { id: string; km: number }) => updateThreshold(id, km), onSuccess: () => { show('Threshold saved', 'success'); qc.invalidateQueries({ queryKey: ['watchlist'] }); } });
-  const items = data?.items || data || [];
-  if (!items.length) return <div className="flex min-h-[45vh] items-center justify-center text-center text-slate-300">No asteroids watched yet. Start tracking objects from the NEO Feed.</div>;
+  const navigate = useNavigate();
+  const { favorites, favoritesLoading, fetchFavorites, removeFavorite } = useAsteroidsStore();
+
+  useEffect(() => {
+    fetchFavorites();
+  }, []);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3 },
+    },
+  };
+
   return (
-    <div className="space-y-3">
-      {items.map((neo: any) => (
-        <GlassCard key={neo.nasaId || neo.id}>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="text-xl text-cyan-300">{neo.name}</div>
-              <div className="text-sm text-slate-300">Next approach: <CountdownTimer targetDate={neo.closeApproachDate || new Date().toISOString()} /></div>
-            </div>
-            <RiskBadge label={(neo.riskLabel || 'WATCH').toUpperCase()} />
-            <input defaultValue={neo.alertThresholdKm || 1000000} type="number" className="w-36 rounded bg-white/5 p-2" onBlur={(e) => update.mutate({ id: String(neo.nasaId || neo.id), km: Number(e.target.value) })} />
-            <button className="rounded border border-red-400/30 px-3 py-2 text-red-300" onClick={() => remove.mutate(String(neo.nasaId || neo.id))}>Remove</button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 space-y-6">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-2"
+      >
+        <div className="flex items-center gap-3">
+          <Star size={32} className="text-yellow-400" />
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            My Watchlist
+          </h1>
+        </div>
+        <p className="text-slate-400">Asteroids you're tracking</p>
+      </motion.div>
+
+      {/* Results */}
+      {favoritesLoading ? (
+        <SkeletonLoader count={6} />
+      ) : favorites.length === 0 ? (
+        <EmptyState
+          title="No asteroids saved"
+          description="Start saving asteroids to track them here"
+          icon={<Star size={48} />}
+          action={{
+            label: 'Browse Asteroids',
+            onClick: () => navigate('/feed'),
+          }}
+        />
+      ) : (
+        <>
+          <div className="text-sm text-slate-400">
+            Tracking <span className="text-cyan-400 font-semibold">{favorites.length}</span> asteroids
           </div>
-        </GlassCard>
-      ))}
+
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
+            {favorites.map((savedAsteroid) => {
+              const asteroid = savedAsteroid.asteroid;
+              return (
+                <motion.div key={asteroid.id} variants={itemVariants}>
+                  <AsteroidCard
+                    name={asteroid.name}
+                    diameterKm={asteroid.diameterKm || 0}
+                    speedKmH={asteroid.speed || 0}
+                    missDistanceKm={asteroid.missDistance || 0}
+                    hazardous={asteroid.is_potentially_hazardous_asteroid}
+                    nextApproachDate={asteroid.nextCloseApproach?.close_approach_date}
+                    isFavorite={true}
+                    onFavoriteClick={() => removeFavorite(asteroid.id)}
+                    onClick={() => navigate(`/asteroid/${asteroid.id}`)}
+                  />
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </>
+      )}
     </div>
   );
 }

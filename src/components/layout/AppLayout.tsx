@@ -10,7 +10,7 @@ import { getFeed } from '@/api/neo.api';
 
 const nav = [
   { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
-  { to: '/neo', label: 'NEO Feed', Icon: Radar },
+  { to: '/feed', label: 'Asteroid Feed', Icon: Radar },
   { to: '/watchlist', label: 'Watchlist', Icon: Star },
   { to: '/alerts', label: 'Alerts', Icon: Bell },
   { to: '/orbit', label: '3D View', Icon: Globe },
