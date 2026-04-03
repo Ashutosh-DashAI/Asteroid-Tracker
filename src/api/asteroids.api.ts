@@ -22,11 +22,11 @@ export const asteroidsAPI = {
     missDistanceMax?: number;
     page?: number;
     limit?: number;
-    sort?: string;
+    sortBy?: string;
   }): Promise<AsteroidFeedResponse> => {
     try {
       const response = await axiosInstance.get('/asteroids/feed', { params });
-      return response.data;
+      return response.data.data || response.data;
     } catch (e) {
       return parseError(e);
     }
@@ -48,7 +48,7 @@ export const asteroidsAPI = {
       const response = await axiosInstance.get('/asteroids/search', {
         params: { q: query, ...params },
       });
-      return response.data;
+      return response.data.data || response.data;
     } catch (e) {
       return parseError(e);
     }
@@ -58,7 +58,7 @@ export const asteroidsAPI = {
   getStats: async (): Promise<AsteroidStats> => {
     try {
       const response = await axiosInstance.get('/asteroids/stats');
-      return response.data;
+      return response.data.data || response.data;
     } catch (e) {
       return parseError(e);
     }
@@ -80,7 +80,7 @@ export const asteroidsAPI = {
   getFavorites: async (params?: { page?: number; limit?: number }): Promise<SavedAsteroid[]> => {
     try {
       const response = await axiosInstance.get('/asteroids/favorites', { params });
-      return response.data;
+      return (response.data.data?.data || response.data.data || response.data) as SavedAsteroid[];
     } catch (e) {
       return parseError(e);
     }
@@ -92,7 +92,7 @@ export const asteroidsAPI = {
         asteroidId,
         notes,
       });
-      return response.data;
+      return response.data.data || response.data;
     } catch (e) {
       return parseError(e);
     }
@@ -119,8 +119,8 @@ export const asteroidsAPI = {
   // Alert preferences
   getAlertPreferences: async (): Promise<AlertPreference> => {
     try {
-      const response = await axiosInstance.get('/asteroids/alerts/preferences');
-      return response.data;
+      const response = await axiosInstance.get('/alerts/preferences');
+      return response.data.data || response.data;
     } catch (e) {
       return parseError(e);
     }
@@ -128,8 +128,8 @@ export const asteroidsAPI = {
 
   updateAlertPreferences: async (preferences: Partial<AlertPreference>): Promise<AlertPreference> => {
     try {
-      const response = await axiosInstance.put('/asteroids/alerts/preferences', preferences);
-      return response.data;
+      const response = await axiosInstance.put('/alerts/preferences', preferences);
+      return response.data.data || response.data;
     } catch (e) {
       return parseError(e);
     }

@@ -47,10 +47,15 @@ export const SignupForm: React.FC = () => {
 
   const onSubmit = async (data: SignupFormValues) => {
     try {
+      console.log('[SignupForm] Submitting signup form for:', data.email);
       await signup(data.email, data.password, data.name, data.username);
-      navigate('/dashboard');
+      console.log('[SignupForm] Signup successful, tokens should be saved, navigating to dashboard');
+      // Small delay to ensure state updates are processed
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 100);
     } catch (err) {
-      console.error('Signup failed:', err);
+      console.error('[SignupForm] Signup failed:', err);
     }
   };
 

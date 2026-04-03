@@ -24,7 +24,7 @@ interface AsteroidsState {
 
   // Favorites
   favorites: SavedAsteroid[];
-  favoriteIds: Set<string>;
+  favoriteIds: string[];
   favoritesLoading: boolean;
 
   // Selected asteroid
@@ -98,7 +98,7 @@ export const useAsteroidsStore = create<AsteroidsState>()(
       searchLoading: false,
 
       favorites: [],
-      favoriteIds: new Set(),
+      favoriteIds: [],
       favoritesLoading: false,
 
       selectedAsteroid: null,
@@ -121,16 +121,21 @@ export const useAsteroidsStore = create<AsteroidsState>()(
             ...state.filters,
             page,
             limit: state.pageSize,
-            sort: state.sortBy,
+            sortBy: state.sortBy,
           };
 
           const response = await asteroidsAPI.getFeed(params);
+          
+          // Extract data and pagination from response
+          const asteroids = response.data || response.asteroids || [];
+          const pagination = response.pagination || {};
+          const total = pagination.total || 0;
 
           set((prev) => ({
-            asteroids: reset ? response.asteroids : [...prev.asteroids, ...response.asteroids],
-            total: response.total,
-            hasMore: response.hasMore,
-            page: response.page,
+            asteroids: reset ? asteroids : [...prev.asteroids, ...asteroids],
+            total,
+            hasMore: pagination.hasNextPage !== false,
+            page: pagination.page || page,
             loading: false,
           }));
         } catch (error) {
@@ -177,8 +182,12 @@ export const useAsteroidsStore = create<AsteroidsState>()(
         set({ searchLoading: true, error: null });
         try {
           const response = await asteroidsAPI.search(query);
+          
+          // Extract data from response
+          const searchResults = response.data || response.asteroids || [];
+          
           set({
-            searchResults: response.asteroids,
+            searchResults,
             searchQuery: query,
             searchLoading: false,
           });
@@ -199,7 +208,7 @@ export const useAsteroidsStore = create<AsteroidsState>()(
         set({ favoritesLoading: true, error: null });
         try {
           const favorites = await asteroidsAPI.getFavorites();
-          const favoriteIds = new Set(favorites.map((f) => f.asteroidId));
+          const favoriteIds = favorites.map((f) => f.asteroidId);
           set({
             favorites,
             favoriteIds,
@@ -218,8 +227,9 @@ export const useAsteroidsStore = create<AsteroidsState>()(
           const favorite = await asteroidsAPI.addFavorite(asteroidId, notes);
           set((prev) => {
             const newFavorites = [...prev.favorites, favorite];
-            const newFavoriteIds = new Set(prev.favoriteIds);
-            newFavoriteIds.add(asteroidId);
+            const newFavoriteIds = prev.favoriteIds.includes(asteroidId)
+              ? prev.favoriteIds
+              : [...prev.favoriteIds, asteroidId];
             return {
               favorites: newFavorites,
               favoriteIds: newFavoriteIds,
@@ -237,8 +247,7 @@ export const useAsteroidsStore = create<AsteroidsState>()(
           await asteroidsAPI.removeFavorite(asteroidId);
           set((prev) => {
             const newFavorites = prev.favorites.filter((f) => f.asteroidId !== asteroidId);
-            const newFavoriteIds = new Set(prev.favoriteIds);
-            newFavoriteIds.delete(asteroidId);
+            const newFavoriteIds = prev.favoriteIds.filter((id) => id !== asteroidId);
             return {
               favorites: newFavorites,
               favoriteIds: newFavoriteIds,
@@ -252,7 +261,7 @@ export const useAsteroidsStore = create<AsteroidsState>()(
       },
 
       isFavorite: (asteroidId: string) => {
-        return get().favoriteIds.has(asteroidId);
+        return get().favoriteIds.includes(asteroidId);
       },
 
       // Actions - Detail

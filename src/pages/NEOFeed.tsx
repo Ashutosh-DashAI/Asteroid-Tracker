@@ -55,7 +55,7 @@ export default function NEOFeed() {
   }, [debouncedSearch]);
 
   // Display results
-  const displayAsteroids = searchQuery ? searchResults : asteroids;
+  const displayAsteroids = (searchQuery ? searchResults : asteroids) || [];
   const totalPages = Math.ceil(total / pageSize);
   const containerVariants = {
     hidden: { opacity: 0 },

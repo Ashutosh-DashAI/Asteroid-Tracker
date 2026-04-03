@@ -3,15 +3,15 @@ import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/store/authStore';
 
 export function useSocket(namespace = '/') {
-  const token = useAuthStore((s) => s.token);
+  const accessToken = useAuthStore((s) => s.accessToken);
   const socket = useMemo<Socket | null>(() => {
-    if (!token) return null;
+    if (!accessToken) return null;
     return io(namespace, {
       path: '/socket.io',
-      auth: { token },
+      auth: { token: accessToken },
       transports: ['websocket'],
     });
-  }, [namespace, token]);
+  }, [namespace, accessToken]);
 
   useEffect(() => () => { socket?.disconnect(); }, [socket]);
 

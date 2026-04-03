@@ -1,4 +1,4 @@
-import{r as t,g as e,j as n,b as i}from"./index-CKr3Wytv.js";import{g as r}from"./watchlist.api-DQF5Ybp2.js";
+import{r as t,g as e,j as n,b as i}from"./index-Bg7Wb5P3.js";import{g as r}from"./watchlist.api-jLqTazc6.js";
 /**
  * @license
  * Copyright 2010-2026 Three.js Authors

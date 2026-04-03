@@ -42,9 +42,9 @@ export const useAlertStore = create<AlertState>((set, get) => ({
   },
   addAlert: (alert) => set((s) => ({ alerts: [alert, ...s.alerts], unreadCount: s.unreadCount + 1 })),
   connectSocket: () => {
-    const token = useAuthStore.getState().token;
-    if (!token || get().socket) return;
-    const socket = io('/alerts', { auth: { token }, transports: ['websocket'] });
+    const accessToken = useAuthStore.getState().accessToken;
+    if (!accessToken || get().socket) return;
+    const socket = io('/alerts', { auth: { token: accessToken }, transports: ['websocket'] });
     socket.on('new_alert', (alert) => get().addAlert(alert));
     set({ socket });
   },

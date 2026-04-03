@@ -13,13 +13,22 @@ import { SkeletonLoader, TableSkeletonLoader } from '@/components/ui/SkeletonLoa
 import { EmptyState, ErrorState } from '@/components/ui/EmptyState';
 import { useNavigate } from 'react-router-dom';
 
+// Default stats object to prevent crashes on undefined response
+const DEFAULT_STATS = {
+  totalAsteroids: 0,
+  hazardousCount: 0,
+  avgDiameter: 0,
+  maxSpeed: 0,
+  totalCount: 0,
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { asteroids, fetchAsteroids, fetchFavorites } = useAsteroidsStore();
 
   // Fetch stats
   const {
-    data: stats,
+    data: stats = DEFAULT_STATS,
     isLoading: statsLoading,
     error: statsError,
     refetch: refetchStats,
@@ -40,7 +49,7 @@ export default function Dashboard() {
       asteroidsAPI.getFeed({
         page: 1,
         limit: 10,
-        sort: 'closest',
+        sortBy: 'closest',
       }),
   });
 
@@ -110,14 +119,14 @@ export default function Dashboard() {
           />
           <StatCard
             title="Avg Diameter"
-            value={stats.avgDiameter.toFixed(2)}
+            value={(stats?.avgDiameter ?? 0).toFixed(2)}
             unit="km"
             icon={<Target size={24} />}
             delay={0.2}
           />
           <StatCard
             title="Max Speed"
-            value={stats.maxSpeed.toFixed(1)}
+            value={(stats?.maxSpeed ?? 0).toFixed(1)}
             unit="km/h"
             icon={<Zap size={24} />}
             delay={0.3}

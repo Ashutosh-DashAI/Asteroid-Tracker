@@ -47,11 +47,16 @@ export const LoginForm: React.FC = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
+      console.log('[LoginForm] Submitting login form for:', data.email);
       await login(data.email, data.password);
-      navigate('/dashboard');
+      console.log('[LoginForm] Login successful, tokens should be saved, navigating to dashboard');
+      // Small delay to ensure state updates are processed
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 100);
     } catch (err) {
       // Error is handled by the store
-      console.error('Login failed:', err);
+      console.error('[LoginForm] Login failed:', err);
     }
   };
 

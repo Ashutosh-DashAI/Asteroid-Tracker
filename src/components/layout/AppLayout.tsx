@@ -1,6 +1,6 @@
 import { Bell, Globe, LayoutDashboard, Menu, MessageSquare, Radar, Star } from 'lucide-react';
-import { NavLink, Outlet } from 'react-router-dom';
-import { useState } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import StarfieldBackground from '@/components/ui/StarfieldBackground';
 import DataTicker from '@/components/ui/DataTicker';
@@ -18,10 +18,19 @@ const nav = [
 ];
 
 export default function AppLayout() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const { user, logout } = useAuthStore();
+  const { user, logout, isAuthenticated } = useAuthStore();
   const { data } = useQuery({ queryKey: ['ticker-feed'], queryFn: () => getFeed({ limit: 15 }) });
   const ticker = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+
+  const handleLogout = async () => {
+    console.log('[AppLayout] Logging out');
+    await logout();
+    console.log('[AppLayout] Logout complete, redirecting to login');
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen">
       <StarfieldBackground />
@@ -36,7 +45,12 @@ export default function AppLayout() {
         </div>
         <div className="absolute bottom-4 left-4 right-4">
           <div className="mb-2 rounded-lg bg-white/5 p-2 text-sm">{user?.name}</div>
-          <button onClick={logout} className="w-full rounded-lg border border-red-400/30 py-2 text-red-300">Logout</button>
+          <button
+            onClick={handleLogout}
+            className="w-full rounded-lg border border-red-400/30 py-2 text-red-300 hover:bg-red-400/10 transition-colors"
+          >
+            Logout
+          </button>
         </div>
       </aside>
       <main className="md:pl-60">
