@@ -1,3 +1,4 @@
+
 import { Router } from "express";
 import { chatController } from "../controllers/chat.controller";
 import { authenticateToken } from "../middleware/auth.middleware";
@@ -10,7 +11,7 @@ import {
 } from "../validators/chat.schema";
 import { asteroidChatParamSchema, chatCreateSchema } from "../validators/chat-thread.schema";
 import prisma from "../db";
-import { error, success } from "../utils/apiResponse";
+import { sendError, sendSuccess } from "../utils/sendResponse";
 
 const router = Router();
 
@@ -45,14 +46,14 @@ router.get("/asteroid/:nasaId", validate(asteroidChatParamSchema, "params"), asy
   try {
     const nasaId = String(req.params.nasaId);
     const asteroid = await prisma.asteroid.findUnique({ where: { nasaId } });
-    if (!asteroid) return error(res, "Asteroid not found", 404);
+    if (!asteroid) return sendError(res, 404, "Asteroid not found");
     const items = await prisma.chatMessage.findMany({
       where: { asteroidId: asteroid.id },
       include: { user: { select: { username: true } } },
       orderBy: { createdAt: "desc" },
       take: 50,
     });
-    return success(res, items.reverse());
+    return sendSuccess(res, 200, "Asteroid chat messages", items.reverse());
   } catch (err) {
     next(err);
   }
@@ -65,9 +66,9 @@ router.get("/asteroid/:nasaId", validate(asteroidChatParamSchema, "params"), asy
 router.post("/", validate(chatCreateSchema), async (req, res, next) => {
   try {
     const userId = req.user?.userId;
-    if (!userId) return error(res, "Unauthorized", 401);
+    if (!userId) return sendError(res, 401, "Unauthorized");
     const content = sanitize(req.body.content).slice(0, 500);
-    if (!content) return error(res, "Content is required", 400);
+    if (!content) return sendError(res, 400, "Content is required");
 
     let asteroidId: string | null = null;
     if (req.body.nasaId) {
@@ -80,7 +81,7 @@ router.post("/", validate(chatCreateSchema), async (req, res, next) => {
       data: { userId, asteroidId, content },
       include: { user: { select: { username: true } } },
     });
-    return success(res, message, "Message sent", 201);
+    return sendSuccess(res, 201, "Message sent", message);
   } catch (err) {
     next(err);
   }

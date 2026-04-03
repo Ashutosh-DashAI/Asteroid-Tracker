@@ -1,18 +1,17 @@
 import { z } from "zod";
 
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(/[!@#$%^&*_]/, "Password must contain at least one special character (!@#$%^&*_)");
+
 export const signupSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  username: z
-    .string()
-    .min(3, "Username must be at least 3 characters")
-    .max(20, "Username must be at most 20 characters")
-    .regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, underscore, and hyphen"),
+  name: z.string().min(2, "Name must be at least 2 characters").max(100),
   email: z.string().email("Invalid email address"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
+  password: passwordSchema,
 });
 
 export const loginSchema = z.object({
@@ -26,20 +25,12 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(1, "Token is required"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
+  password: passwordSchema,
 });
 
 export const changePasswordSchema = z.object({
   oldPassword: z.string().min(1, "Old password is required"),
-  newPassword: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
+  newPassword: passwordSchema,
 });
 
 export const refreshTokenSchema = z.object({

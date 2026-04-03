@@ -1,4 +1,23 @@
 import "dotenv/config";
+import logger from "../utils/logger";
+
+// Validate required environment variables
+const validateEnv = () => {
+  const required = ["DATABASE_URL", "JWT_SECRET", "JWT_REFRESH_SECRET"];
+  const missing: string[] = [];
+
+  required.forEach((key) => {
+    if (!process.env[key]) {
+      missing.push(key);
+    }
+  });
+
+  if (missing.length > 0) {
+    const message = `Missing required environment variables: ${missing.join(", ")}`;
+    logger.error(message);
+    throw new Error(message);
+  }
+};
 
 export const env = {
   // Server
@@ -9,14 +28,13 @@ export const env = {
   DATABASE_URL: process.env.DATABASE_URL!,
 
   // JWT
-  JWT_SECRET: process.env.JWT_SECRET || "your-secret-key-change-in-production",
-  JWT_REFRESH_SECRET:
-    process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key-change-in-production",
+  JWT_SECRET: process.env.JWT_SECRET!,
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET!,
   JWT_EXPIRE: process.env.JWT_EXPIRE || "15m",
   JWT_REFRESH_EXPIRE: process.env.JWT_REFRESH_EXPIRE || "7d",
 
   // CORS
-  CORS_ORIGIN: process.env.CORS_ORIGIN || "http://localhost:3000",
+  CORS_ORIGIN: process.env.CORS_ORIGIN || "http://localhost:5173",
   CLIENT_URL: process.env.CLIENT_URL || "http://localhost:5173",
 
   // App
@@ -40,5 +58,8 @@ export const env = {
   NASA_API_CACHE_DURATION: parseInt(process.env.NASA_API_CACHE_DURATION || "3600000", 10), // 1 hour in ms
   SYNC_INTERVAL_HOURS: parseInt(process.env.SYNC_INTERVAL_HOURS || "6", 10),
 };
+
+// Validate environment on export
+validateEnv();
 
 export default env;

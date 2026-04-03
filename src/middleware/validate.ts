@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import type { ZodSchema } from "zod";
-import { error } from "../utils/apiResponse";
+import { sendError } from "../utils/sendResponse";
 
 export const validate =
   (schema: ZodSchema, source: "body" | "query" | "params" = "body") =>
@@ -17,6 +17,6 @@ export const validate =
 
       next();
     } catch (err: any) {
-      return error(res, "Validation failed", 400, err?.issues ?? err);
+      return sendError(res, 400, "Validation failed");
     }
   };

@@ -1,45 +1,53 @@
 import type { Response } from "express";
+import logger from "./logger";
 
 export interface ApiResponse<T = any> {
   success: boolean;
   statusCode: number;
   message: string;
   data?: T;
-  error?: any;
 }
 
+/**
+ * Send a unified API response
+ */
 export const sendResponse = <T = any>(
   res: Response,
   statusCode: number,
   message: string,
-  data?: T,
-  error?: any
+  data?: T
 ): Response => {
   const response: ApiResponse<T> = {
     success: statusCode < 400,
     statusCode,
     message,
     ...(data && { data }),
-    ...(error && { error }),
   };
 
   return res.status(statusCode).json(response);
 };
 
+/**
+ * Send a success response
+ */
 export const sendSuccess = <T = any>(
   res: Response,
   statusCode: number,
   message: string,
   data?: T
 ): Response => {
+  logger.debug(`Success response: ${statusCode} - ${message}`);
   return sendResponse(res, statusCode, message, data);
 };
 
+/**
+ * Send an error response
+ */
 export const sendError = (
   res: Response,
   statusCode: number,
-  message: string,
-  error?: any
+  message: string
 ): Response => {
-  return sendResponse(res, statusCode, message, undefined, error);
+  logger.debug(`Error response: ${statusCode} - ${message}`);
+  return sendResponse(res, statusCode, message);
 };

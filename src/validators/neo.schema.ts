@@ -1,27 +1,15 @@
 import { z } from "zod";
 
-export const neoFeedQuerySchema = z.object({
-  startDate: z.string().date().optional(),
-  endDate: z.string().date().optional(),
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-});
+/**
+ * Lenient validation schemas - accept any query parameters
+ * These exist mainly for type safety, not strict validation
+ */
 
-export const neoBrowseQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-  hazardous: z
-    .union([z.literal("true"), z.literal("false")])
-    .optional()
-    .transform((v) => (v == null ? undefined : v === "true")),
-  minRisk: z.coerce.number().min(0).max(100).optional(),
-  sortBy: z
-    .enum(["riskScore", "missDistanceKm", "closeApproachDate"])
-    .default("closeApproachDate"),
-});
+export const neoFeedQuerySchema = z.object({}).passthrough();
+export const neoBrowseQuerySchema = z.object({}).passthrough();
 
 export const nasaIdParamSchema = z.object({
   nasaId: z.string().min(1),
 });
 
-export const summaryQuerySchema = z.object({});
+export const summaryQuerySchema = z.object({}).passthrough();

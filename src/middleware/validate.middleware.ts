@@ -23,3 +23,16 @@ export const validateRequest =
       return sendError(res, 400, "Validation error", error.errors);
     }
   };
+
+// Overload for both old and new calling styles
+export const validate = (
+  sourceOrSchema: "body" | "query" | "params" | ZodSchema,
+  schemaOrSource?: ZodSchema | "body" | "query" | "params"
+) => {
+  // New style: validate("body", schema)
+  if (typeof sourceOrSchema === "string") {
+    return validateRequest(schemaOrSource as ZodSchema, sourceOrSchema as "body" | "query" | "params");
+  }
+  // Old style: validate(schema, "body")
+  return validateRequest(sourceOrSchema as ZodSchema, (schemaOrSource as "body" | "query" | "params") || "body");
+};

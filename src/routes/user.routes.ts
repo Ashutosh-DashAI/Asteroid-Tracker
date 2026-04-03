@@ -6,40 +6,14 @@ import { updateProfileSchema } from "../validators/user.schema";
 
 const router = Router();
 
-// Public routes
-router.get(
-  "/search",
-  validateRequest(
-    updateProfileSchema.pick({ username: true }).extend({
-      query: updateProfileSchema.shape.username,
-      limit: updateProfileSchema.shape.username.optional(),
-      offset: updateProfileSchema.shape.username.optional(),
-    }).optional(),
-    "query"
-  ),
-  userController.searchUsers
-);
-
-router.get("/:id", userController.getUserById);
-
-router.get("/:id/followers", userController.getFollowers);
-
-router.get("/:id/following", userController.getFollowing);
-
-// Protected routes
-router.get("/profile/current", authenticateToken, userController.getProfile);
+// All routes require authentication for user profile management
+router.get("/profile", authenticateToken, userController.getProfile);
 
 router.put(
-  "/update",
+  "/profile",
   authenticateToken,
   validateRequest(updateProfileSchema),
   userController.updateProfile
 );
-
-router.delete("/delete", authenticateToken, userController.deleteAccount);
-
-router.post("/follow/:id", authenticateToken, userController.followUser);
-
-router.post("/unfollow/:id", authenticateToken, userController.unfollowUser);
 
 export default router;

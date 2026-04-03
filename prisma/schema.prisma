@@ -13,37 +13,29 @@ datasource db {
 // USER MODEL
 // ============================================
 model User {
-  id                String              @id @default(uuid())
-  name              String
-  username          String              @unique
-  email             String              @unique
-  passwordHash      String
-  avatar            String?
-  bio               String?
-  role              UserRole            @default(USER)
-  isVerified        Boolean             @default(false)
-  isBanned          Boolean             @default(false)
-  resetTokenHash    String?
-  resetTokenExpire  DateTime?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  id               String           @id @default(uuid())
+  name             String
+  email            String           @unique
+  passwordHash     String
+  username         String?
+  avatar           String?
+  bio              String?
+  role             UserRole         @default(USER)
+  isVerified       Boolean          @default(false)
+  isBanned         Boolean          @default(false)
+  resetTokenHash   String?
+  resetTokenExpire DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   // Relations
-  refreshTokens     RefreshToken[]
-  followedBy        Follow[]            @relation("follower")
-  following         Follow[]            @relation("following")
-  sentMessages      Message[]           @relation("sender")
-  receivedMessages  Message[]           @relation("receiver")
-  conversationsAs1  Conversation[]      @relation("participant1")
-  conversationsAs2  Conversation[]      @relation("participant2")
-  notifications     Notification[]
-  bookmarks         Bookmark[]
-  createdChats      ChatMessage[]
-  watchedAsteroids  WatchedAsteroid[]
-  alerts            Alert[]
+  refreshTokens    RefreshToken[]
+  savedAsteroids   SavedAsteroid[]
+  savedSearches    SavedSearch[]
+  alertPreferences AlertPreference[]
+  notifications    Notification[]
 
   @@index([email])
-  @@index([username])
 }
 
 enum UserRole {
@@ -68,191 +60,88 @@ model RefreshToken {
 }
 
 // ============================================
-// FOLLOW MODEL
-// ============================================
-model Follow {
-  id          String   @id @default(uuid())
-  followerId  String
-  followingId String
-  createdAt   DateTime @default(now())
-
-  // Relations
-  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
-  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
-
-  @@unique([followerId, followingId])
-  @@index([followerId])
-  @@index([followingId])
-}
-
-// ============================================
-// CONVERSATION MODEL
-// ============================================
-model Conversation {
-  id               String   @id @default(uuid())
-  participantOneId String
-  participantTwoId String
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  // Relations
-  participantOne   User     @relation("participant1", fields: [participantOneId], references: [id], onDelete: Cascade)
-  participantTwo   User     @relation("participant2", fields: [participantTwoId], references: [id], onDelete: Cascade)
-  messages         Message[]
-
-  @@unique([participantOneId, participantTwoId])
-  @@index([participantOneId])
-  @@index([participantTwoId])
-}
-
-// ============================================
-// MESSAGE MODEL
-// ============================================
-model Message {
-  id             String       @id @default(uuid())
-  senderId       String
-  receiverId     String
-  conversationId String
-  content        String
-  isRead         Boolean      @default(false)
-  readAt         DateTime?
-  deletedBy      String?      // Track who deleted the message
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-
-  // Relations
-  sender         User         @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver       User         @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  bookmark       Bookmark?
-
-  @@index([conversationId])
-  @@index([senderId])
-  @@index([receiverId])
-}
-
-// ============================================
-// NOTIFICATION MODEL
+// NOTIFICATION MODEL (Asteroid-only)
 // ============================================
 model Notification {
-  id        String           @id @default(uuid())
+  id        String   @id @default(uuid())
   userId    String
-  type      NotificationType
+  type      String   @default("ALERT") // ALERT, SYSTEM
   title     String
   message   String
-  isRead    Boolean          @default(false)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([isRead])
-}
-
-enum NotificationType {
-  FOLLOW
-  MESSAGE
-  PASSWORD_CHANGED
-  SYSTEM
-}
-
-// ============================================
-// BOOKMARK MODEL
-// ============================================
-model Bookmark {
-  id        String   @id @default(uuid())
-  userId    String
-  messageId String   @unique
-  createdAt DateTime @default(now())
-
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, messageId])
-  @@index([userId])
-}
-
-// ============================================
-// CHAT MESSAGE MODEL (for group/public chat)
-// ============================================
-model ChatMessage {
-  id        String   @id @default(uuid())
-  userId    String
-  asteroidId String?
-  content   String
-  createdAt DateTime @default(now())
-
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  asteroid  Asteroid? @relation(fields: [asteroidId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([asteroidId])
 }
 
 // ============================================
 // ASTEROID MODEL
 // ============================================
 model Asteroid {
-  id                    String            @id @default(uuid())
-  nasaId                String            @unique
+  id                    String           @id @default(uuid())
+  nasaId                String           @unique
   name                  String
-  estimatedDiameterMinKm Float
-  estimatedDiameterMaxKm Float
-  isPotentiallyHazardous Boolean
+  estimatedDiameterMin  Float            @default(0)
+  estimatedDiameterMax  Float            @default(0)
+  hazardous             Boolean          @default(false)
   absoluteMagnitude     Float
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  orbitalClass          String?
+  velocityKmPerSecond   Float?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 
   // Relations
   closeApproaches       CloseApproach[]
-  watchedBy             WatchedAsteroid[]
-  alerts                Alert[]
-  chatMessages          ChatMessage[]
+  savedAsteroids        SavedAsteroid[]
 
   @@index([nasaId])
-  @@index([isPotentiallyHazardous])
+  @@index([hazardous])
+  @@index([createdAt])
 }
 
 // ============================================
 // CLOSE APPROACH MODEL
 // ============================================
 model CloseApproach {
-  id                  String    @id @default(uuid())
+  id                  String   @id @default(uuid())
   asteroidId          String
   closeApproachDate   DateTime
   relativeVelocityKmS Float
   missDistanceKm      Float
   orbitingBody        String
-  riskScore           Float
-  createdAt           DateTime  @default(now())
+  createdAt           DateTime @default(now())
 
   // Relations
-  asteroid            Asteroid  @relation(fields: [asteroidId], references: [id], onDelete: Cascade)
-  alerts              Alert[]
+  asteroid            Asteroid @relation(fields: [asteroidId], references: [id], onDelete: Cascade)
 
   @@index([asteroidId])
   @@index([closeApproachDate])
-  @@index([riskScore])
   @@unique([asteroidId, closeApproachDate])
 }
 
 // ============================================
-// WATCHED ASTEROID MODEL (User bookmarks asteroids)
+// SAVED ASTEROID MODEL
 // ============================================
-model WatchedAsteroid {
-  id               String   @id @default(uuid())
-  userId           String
-  asteroidId       String
-  alertThresholdKm Float    @default(1000000)
-  createdAt        DateTime @default(now())
+model SavedAsteroid {
+  id                   String   @id @default(uuid())
+  userId               String
+  asteroidId           String
+  asteroidName         String
+  hazardous            Boolean
+  closeApproachDate    DateTime?
+  missDistanceKm       Float?
+  estimatedDiameterMin Float?
+  estimatedDiameterMax Float?
+  createdAt            DateTime @default(now())
 
   // Relations
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  asteroid         Asteroid @relation(fields: [asteroidId], references: [id], onDelete: Cascade)
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asteroid             Asteroid @relation(fields: [asteroidId], references: [id], onDelete: Cascade)
 
   @@unique([userId, asteroidId])
   @@index([userId])
@@ -260,24 +149,71 @@ model WatchedAsteroid {
 }
 
 // ============================================
-// ALERT MODEL
+// SAVED SEARCH MODEL
 // ============================================
-model Alert {
-  id              String        @id @default(uuid())
-  userId          String
-  asteroidId      String
-  closeApproachId String
-  message         String
-  isRead          Boolean       @default(false)
-  triggeredAt     DateTime      @default(now())
+model SavedSearch {
+  id           String   @id @default(uuid())
+  userId       String
+  name         String?
+  startDate    DateTime
+  endDate      DateTime
+  hazardousOnly Boolean @default(false)
+  minDiameter  Float?
+  maxMissDistance Float?
+  createdAt    DateTime @default(now())
 
   // Relations
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  asteroid        Asteroid      @relation(fields: [asteroidId], references: [id], onDelete: Cascade)
-  closeApproach   CloseApproach @relation(fields: [closeApproachId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ============================================
+// ALERT PREFERENCE MODEL
+// ============================================
+model AlertPreference {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  hazardousOnly   Boolean  @default(true)
+  minDiameter     Float?
+  maxMissDistance Float?
+  emailEnabled    Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ============================================
+// ASTEROID CACHE MODEL
+// ============================================
+model AsteroidCache {
+  id        String   @id @default(uuid())
+  asteroidId String  @unique
+  rawData   String   // Stores JSON stringified NASA response
+  fetchedAt DateTime @default(now())
+  expiresAt DateTime
+
   @@index([asteroidId])
-  @@index([closeApproachId])
-  @@index([isRead])
+  @@index([expiresAt])
+}
+
+// ============================================
+// API REQUEST LOG MODEL
+// ============================================
+model ApiRequestLog {
+  id           String   @id @default(uuid())
+  endpoint     String
+  method       String
+  statusCode   Int
+  responseTime Int      // milliseconds
+  userId       String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([endpoint])
+  @@index([createdAt])
 }

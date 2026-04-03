@@ -35,6 +35,13 @@ router.post(
   authController.refreshToken
 );
 
+// Alias for /refresh-token
+router.post(
+  "/refresh",
+  validateRequest(refreshTokenSchema),
+  authController.refreshToken
+);
+
 router.post(
   "/forgot-password",
   validateRequest(forgotPasswordSchema),

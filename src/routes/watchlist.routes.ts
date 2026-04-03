@@ -3,7 +3,7 @@ import prisma from "../db";
 import { authenticateToken } from "../middleware/auth.middleware";
 import { validate } from "../middleware/validate";
 import { createWatchSchema, updateWatchSchema, watchParamSchema } from "../validators/watchlist.schema";
-import { error, success } from "../utils/apiResponse";
+import { sendError, sendSuccess } from "../utils/sendResponse";
 import { fetchAsteroidById } from "../services/nasaService";
 import { syncNEOFeedToDB } from "../services/syncService";
 
@@ -17,7 +17,7 @@ router.use(authenticateToken);
 router.get("/", async (req, res, next) => {
   try {
     const userId = req.user?.userId;
-    if (!userId) return error(res, "Unauthorized", 401);
+    if (!userId) return sendError(res, 401, "Unauthorized");
 
     const rows = await prisma.watchedAsteroid.findMany({
       where: { userId },
@@ -28,7 +28,7 @@ router.get("/", async (req, res, next) => {
       },
       orderBy: { createdAt: "desc" },
     });
-    return success(res, rows);
+    return sendSuccess(res, 200, "Watchlist retrieved", rows);
   } catch (err) {
     next(err);
   }
@@ -41,7 +41,7 @@ router.get("/", async (req, res, next) => {
 router.post("/", validate(createWatchSchema), async (req, res, next) => {
   try {
     const userId = req.user?.userId;
-    if (!userId) return error(res, "Unauthorized", 401);
+    if (!userId) return sendError(res, 401, "Unauthorized");
     const { nasaId, alertThresholdKm } = req.body;
 
     let asteroid = await prisma.asteroid.findUnique({ where: { nasaId } });
@@ -50,14 +50,14 @@ router.post("/", validate(createWatchSchema), async (req, res, next) => {
       await syncNEOFeedToDB(7);
       asteroid = await prisma.asteroid.findUnique({ where: { nasaId } });
     }
-    if (!asteroid) return error(res, "Asteroid not found", 404);
+    if (!asteroid) return sendError(res, 404, "Asteroid not found");
 
     const watch = await prisma.watchedAsteroid.upsert({
       where: { userId_asteroidId: { userId, asteroidId: asteroid.id } },
       update: { alertThresholdKm },
       create: { userId, asteroidId: asteroid.id, alertThresholdKm },
     });
-    return success(res, watch, "Added to watchlist", 201);
+    return sendSuccess(res, 201, "Added to watchlist", watch);
   } catch (err) {
     next(err);
   }
@@ -70,10 +70,10 @@ router.post("/", validate(createWatchSchema), async (req, res, next) => {
 router.delete("/:nasaId", validate(watchParamSchema, "params"), async (req, res, next) => {
   try {
     const userId = req.user?.userId;
-    if (!userId) return error(res, "Unauthorized", 401);
+    if (!userId) return sendError(res, 401, "Unauthorized");
     const nasaId = String(req.params.nasaId);
     const asteroid = await prisma.asteroid.findUnique({ where: { nasaId } });
-    if (!asteroid) return error(res, "Asteroid not found", 404);
+    if (!asteroid) return sendError(res, 404, "Asteroid not found");
 
     await prisma.watchedAsteroid.delete({
       where: { userId_asteroidId: { userId, asteroidId: asteroid.id } },

@@ -1,33 +1,315 @@
-# ASTRA Backend Setup Guide
+# NASA Asteroid Tracker - Backend Setup Guide
 
-## 🚀 Quick Start
+This guide will help you set up and run the production-ready NASA Asteroid Tracker backend.
 
-The backend is built with:
-- **Node.js/Bun** - JavaScript runtime
-- **Express.js** - Web framework
-- **TypeScript** - Type safety
-- **Prisma** - ORM with PostgreSQL
-- **Socket.IO** - Real-time communication
-- **JWT** - Authentication
-- **Zod** - Schema validation
+---
 
-## 📋 Environment Setup
+## 🛠️ Prerequisites
 
-Create a `.env` file in the backend root:
+- **Bun** v1.3+ ([Download](https://bun.sh))
+- **PostgreSQL** 13+ ([Download](https://www.postgresql.org/download/))
+- **NASA API Key** (free from [https://api.nasa.gov/](https://api.nasa.gov/))
+
+---
+
+## 📦 Installation
+
+### 1. Install Dependencies
+
+```bash
+bun install
+```
+
+### 2. Generate Prisma Client
+
+```bash
+bun run prisma:generate
+```
+
+### 3. Setup Environment Variables
+
+Create a `.env` file in the root directory:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your configuration:
 
 ```env
-# Server
+# Server Configuration
 PORT=3000
 NODE_ENV=development
 
-# Database - PostgreSQL
-DATABASE_URL=postgresql://username:password@localhost:5432/astra
+# Database (PostgreSQL)
+DATABASE_URL=postgresql://user:password@localhost:5432/astra_db
 
-# JWT Secrets
-JWT_SECRET=your-secret-key-change-in-production
-JWT_REFRESH_SECRET=your-refresh-secret-key-change-in-production
+# JWT Authentication
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-in-production
 JWT_EXPIRE=15m
 JWT_REFRESH_EXPIRE=7d
+
+# CORS Configuration
+CORS_ORIGIN=http://localhost:5173
+CLIENT_URL=http://localhost:5173
+
+# NASA API (Required)
+# Get free key at: https://api.nasa.gov/
+NASA_API_KEY=your-nasa-api-key
+NASA_NEOWS_API_URL=https://api.nasa.gov/neo/rest/v1
+NASA_API_CACHE_DURATION=3600000
+SYNC_INTERVAL_HOURS=6
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+```
+
+### 4. Initialize Database
+
+```bash
+# Create migration
+bun run prisma:migrate
+
+# Optional: View database with Prisma Studio
+bun run prisma:studio
+```
+
+---
+
+## 🚀 Running the Backend
+
+### Development Mode
+
+```bash
+bun run dev
+```
+
+Server will start on `http://localhost:3000`
+
+### Production Mode
+
+```bash
+bun run start
+```
+
+---
+
+## 🧪 Testing the Backend
+
+### Health Check
+```bash
+curl http://localhost:3000/health
+```
+
+### Test Asteroid Feed
+```bash
+curl "http://localhost:3000/api/asteroids/feed?startDate=2024-02-01&endDate=2024-02-07"
+```
+
+### Test Dashboard Stats
+```bash
+curl "http://localhost:3000/api/asteroids/stats?days=7"
+```
+
+---
+
+## 📝 API Endpoints
+
+### Public Endpoints (No Authentication)
+- `GET /api/asteroids/feed` - Asteroids for date range
+- `GET /api/asteroids/search` - Search asteroids
+- `GET /api/asteroids/:nasaId` - Asteroid details
+- `GET /api/asteroids/hazardous` - Hazardous asteroids
+- `GET /api/asteroids/stats` - Dashboard statistics
+
+### Authentication Endpoints
+- `POST /api/auth/register` - Create account
+- `POST /api/auth/login` - Login
+- `POST /api/auth/refresh` - Refresh token
+
+### Authenticated User Endpoints
+- `GET /api/saved-asteroids` - List saved asteroids
+- `POST /api/saved-asteroids` - Save asteroid
+- `DELETE /api/saved-asteroids/:id` - Remove saved
+
+- `GET /api/saved-searches` - List saved searches
+- `POST /api/saved-searches` - Save search
+- `DELETE /api/saved-searches/:id` - Remove search
+
+- `GET /api/alerts/preferences` - Get alert settings
+- `POST /api/alerts/preferences` - Update alerts
+
+For complete API documentation, see [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
+
+---
+
+## 🗄️ Database Schema
+
+Key tables:
+- **User** - User accounts with authentication
+- **Asteroid** - Asteroid data from NASA
+- **CloseApproach** - Upcoming asteroid approaches
+- **SavedAsteroid** - User-saved asteroids
+- **SavedSearch** - User-saved searches
+- **AlertPreference** - User alert settings
+- **Notification** - User notifications
+
+View schema: `prisma/schema.prisma`
+
+---
+
+## 🔧 Development
+
+### Environment Details
+
+- **Runtime**: Bun (fast JavaScript runtime)
+- **Server**: Express v5
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: JWT tokens
+- **Validation**: Zod schemas
+- **Logging**: Pino
+
+### Project Structure
+
+```
+src/
+├── controllers/     # Request handlers
+├── routes/         # Express routes
+├── services/       # Business logic
+├── middleware/     # Express middleware
+├── validators/     # Zod validation schemas
+├── types/          # TypeScript types
+├── utils/          # Helper functions
+├── config/         # Configuration
+└── db.ts          # Prisma client
+```
+
+### Adding New Endpoints
+
+1. **Define Schema** (`src/validators/*.schema.ts`)
+   ```typescript
+   export const newEndpointSchema = z.object({
+     field: z.string().min(1)
+   });
+   ```
+
+2. **Create Service** (`src/services/*.services.ts`)
+   ```typescript
+   export const newService = {
+     async doSomething(data: any) {
+       // Business logic
+     }
+   };
+   ```
+
+3. **Create Controller** (`src/controllers/*.controller.ts`)
+   ```typescript
+   export const newController = {
+     action: asyncHandler(async (req, res) => {
+       // Handle request
+     })
+   };
+   ```
+
+4. **Add Route** (`src/routes/*.routes.ts`)
+   ```typescript
+   router.post('/endpoint', 
+     validate('body', newEndpointSchema),
+     newController.action
+   );
+   ```
+
+---
+
+## ⚠️ Common Issues
+
+### "Cannot find module" errors
+```bash
+bun run prisma:generate
+```
+
+### Database connection fails
+- Verify PostgreSQL is running
+- Check DATABASE_URL in .env
+- Ensure database exists: `createdb astra_db`
+
+### NASA API errors
+- Verify NASA_API_KEY is set in .env
+- Check API key at https://api.nasa.gov/
+- API rate limits: 1000 requests/hour
+
+### Port already in use
+```bash
+# Change PORT in .env or
+lsof -i :3000  # Find process
+kill -9 <PID>  # Kill process
+```
+
+---
+
+## 📊 Monitoring
+
+### Check NASA API Status
+The service includes rate limit detection and retry logic (exponential backoff).
+
+### Monitor Logs
+With NODE_ENV=development, logs show:
+- API requests
+- Cache hits/misses
+- Database queries
+- Errors with stack traces
+
+---
+
+## 🚀 Deployment
+
+### Production Checklist
+
+- [ ] Update `JWT_SECRET` (generate strong random key)
+- [ ] Update `JWT_REFRESH_SECRET`
+- [ ] Set `NODE_ENV=production`
+- [ ] Update `CORS_ORIGIN` to production domain
+- [ ] Update `CLIENT_URL` to production frontend
+- [ ] Use external PostgreSQL database
+- [ ] Set `NASA_API_KEY` for production
+- [ ] Enable HTTPS
+- [ ] Set up logging/monitoring
+- [ ] Configure rate limits appropriately
+- [ ] Add database backups
+- [ ] Implement CI/CD
+
+### Environment Variables for Production
+
+```env
+NODE_ENV=production
+DATABASE_URL=postgresql://prod_user:complex_password@prod_db_host.com:5432/astra_prod
+JWT_SECRET=<generate-with-crypto-randomBytes>
+JWT_REFRESH_SECRET=<generate-with-crypto-randomBytes>
+CORS_ORIGIN=https://yourfrontend.com
+NASA_API_KEY=<production-key>
+```
+
+---
+
+## 🆘 Support & Documentation
+
+- API Reference: [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
+- Postman Collection: [ASTRA_Postman_Collection.json](./ASTRA_Postman_Collection.json)
+- Prisma Docs: https://www.prisma.io/docs/
+- Bun Docs: https://bun.sh/docs
+- Express Docs: https://expressjs.com/
+
+---
+
+## 📄 License
+
+MIT
+
+---
+
+**For questions or issues, please check the documentation or open an issue in the repository.**
 
 # CORS
 CORS_ORIGIN=http://localhost:5173
