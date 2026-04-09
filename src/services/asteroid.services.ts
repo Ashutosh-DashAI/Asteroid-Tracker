@@ -162,24 +162,37 @@ export const asteroidService = {
 
       const asteroids = await nasaService.fetchNearEarthObjectsFeed(startDateStr, endDateStr);
 
+      if (!asteroids || asteroids.length === 0) {
+        return {
+          totalAsteroids: 0,
+          hazardousCount: 0,
+          hazardousPercentage: "0.00",
+          averageDiameter: 0,
+          largestAsteroid: null,
+          nearestAsteroid: null,
+          fastestAsteroid: null,
+          totalCloseApproaches: 0,
+        };
+      }
+
       const hazardous = asteroids.filter((a) => a.hazardous);
       const allCloseApproaches = asteroids.flatMap((a) => a.closeApproaches);
 
       const largestAsteroid = asteroids.reduce((max, a) =>
         a.estimatedDiameterMax > max.estimatedDiameterMax ? a : max
-      );
+      , asteroids[0]);
 
       const nearestAsteroid = asteroids.reduce((min, a) => {
         const minMiss = Math.min(...a.closeApproaches.map((ca) => ca.missDistanceKm));
         const currentMinMiss = Math.min(...min.closeApproaches.map((ca) => ca.missDistanceKm));
         return minMiss < currentMinMiss ? a : min;
-      });
+      }, asteroids[0]);
 
       const fastestAsteroid = asteroids.reduce((max, a) => {
         const maxVel = Math.max(...a.closeApproaches.map((ca) => ca.velocityKmS));
         const currentMaxVel = Math.max(...max.closeApproaches.map((ca) => ca.velocityKmS));
         return maxVel > currentMaxVel ? a : max;
-      });
+      }, asteroids[0]);
 
       return {
         totalAsteroids: asteroids.length,
@@ -226,23 +239,45 @@ export const asteroidService = {
     }
   ) {
     try {
-      // Verify asteroid exists first
-      const asteroid = await prisma.asteroid.findUnique({
-        where: { id: asteroidId },
+      // First find or create the Asteroid by NASA ID (stored in nasaId field)
+      let asteroid = await (prisma as any).Asteroid.findUnique({
+        where: { nasaId: asteroidId },
       });
 
       if (!asteroid) {
-        throw new Error("Asteroid not found in database");
+        // Create the asteroid if it doesn't exist
+        asteroid = await (prisma as any).Asteroid.create({
+          data: {
+            nasaId: asteroidId,
+            name: data.asteroidName,
+            hazardous: data.hazardous,
+            estimatedDiameterMin: data.estimatedDiameterMin || 0,
+            estimatedDiameterMax: data.estimatedDiameterMax || 0,
+            absoluteMagnitude: 0,
+          },
+        });
       }
 
       const saved = await (prisma as any).SavedAsteroid.upsert({
-        where: { userId_asteroidId: { userId, asteroidId } },
+        where: { userId_asteroidId: { userId, asteroidId: asteroid.id } },
         create: {
           userId,
-          asteroidId,
-          ...data,
+          asteroidId: asteroid.id,
+          asteroidName: data.asteroidName,
+          hazardous: data.hazardous,
+          closeApproachDate: data.closeApproachDate,
+          missDistanceKm: data.missDistanceKm,
+          estimatedDiameterMin: data.estimatedDiameterMin,
+          estimatedDiameterMax: data.estimatedDiameterMax,
         },
-        update: data,
+        update: {
+          asteroidName: data.asteroidName,
+          hazardous: data.hazardous,
+          closeApproachDate: data.closeApproachDate,
+          missDistanceKm: data.missDistanceKm,
+          estimatedDiameterMin: data.estimatedDiameterMin,
+          estimatedDiameterMax: data.estimatedDiameterMax,
+        },
       });
 
       return saved;
@@ -283,12 +318,23 @@ export const asteroidService = {
           orderBy: {
             [options?.sortBy || "createdAt"]: options?.order || "desc",
           },
+          include: {
+            asteroid: true, // Include asteroid to get nasaId
+          },
         }),
         (prisma as any).SavedAsteroid.count({ where }),
       ]);
 
+      // Transform to include NASA ID alongside internal ID
+      const data = saved.map((s: any) => ({
+        ...s,
+        asteroidId: s.asteroid?.nasaId || s.asteroidId, // Return NASA ID as asteroidId for frontend compatibility
+        nasaId: s.asteroid?.nasaId,
+        originalAsteroidId: s.asteroidId, // Keep internal ID for deletion
+      }));
+
       return {
-        data: saved,
+        data,
         meta: {
           page,
           limit,
@@ -307,18 +353,37 @@ export const asteroidService = {
   /**
    * Delete saved asteroid
    */
-  async deleteSavedAsteroid(userId: string, savedAsteroidId: string) {
+  async deleteSavedAsteroid(userId: string, asteroidId: string) {
     try {
-      const saved = await (prisma as any).SavedAsteroid.findUnique({
-        where: { id: savedAsteroidId },
+      // Find the asteroid first to get internal ID
+      const asteroid = await (prisma as any).Asteroid.findUnique({
+        where: { nasaId: asteroidId },
       });
 
-      if (!saved || saved.userId !== userId) {
+      if (!asteroid) {
+        // Try to find by saved asteroid record directly
+        const saved = await (prisma as any).SavedAsteroid.findFirst({
+          where: { userId, asteroidId },
+        });
+        if (saved) {
+          await (prisma as any).SavedAsteroid.delete({
+            where: { id: saved.id },
+          });
+        }
+        return { success: true };
+      }
+
+      // Find the saved asteroid by userId and asteroid internal ID
+      const saved = await (prisma as any).SavedAsteroid.findFirst({
+        where: { userId, asteroidId: asteroid.id },
+      });
+
+      if (!saved) {
         throw new Error("Saved asteroid not found");
       }
 
       await (prisma as any).SavedAsteroid.delete({
-        where: { id: savedAsteroidId },
+        where: { id: saved.id },
       });
 
       return { success: true };

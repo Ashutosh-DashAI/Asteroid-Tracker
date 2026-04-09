@@ -72,8 +72,25 @@ app.use(express.urlencoded({ extended: true }));
 app.use(generalLimiter);
 
 // Health check route
-app.get("/health", (req, res) => {
-  res.json({ status: "ok", message: "NASA Asteroid Tracker running", timestamp: new Date() });
+app.get("/health", async (req, res) => {
+  const start = Date.now();
+
+  const [dbCheck] = await Promise.allSettled([
+    prisma.$queryRaw`SELECT 1`,
+  ]);
+
+  const payload = {
+    status: dbCheck.status === 'fulfilled' ? 'ok' : 'degraded',
+    uptime: process.uptime(),
+    responseTimeMs: Date.now() - start,
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version ?? '0.0.0',
+    services: {
+      database: dbCheck.status === 'fulfilled' ? 'healthy' : 'degraded',
+    }
+  };
+
+  res.status(payload.status === 'ok' ? 200 : 503).json(payload);
 });
 
 // API Routes

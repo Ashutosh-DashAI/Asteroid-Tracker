@@ -38,7 +38,7 @@ export const env = {
   CLIENT_URL: process.env.CLIENT_URL || "http://localhost:5173",
 
   // App
-  APP_NAME: "ASTRA",
+  APP_NAME: "Asteroid Tracker",
   APP_URL: process.env.APP_URL || "http://localhost:3000",
 
   // Email (optional for forgot password)
