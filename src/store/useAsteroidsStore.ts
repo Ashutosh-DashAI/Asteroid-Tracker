@@ -131,8 +131,17 @@ export const useAsteroidsStore = create<AsteroidsState>()(
           const pagination = response.pagination || {};
           const total = pagination.total || 0;
 
+          // Build computed closeApproaches array from response
+          const asteroidsWithApproaches = asteroids.map((a: any) => ({
+            ...a,
+            closeApproaches: a.closeApproaches || a.close_approach_data || [],
+            estimatedDiameterMin: a.estimatedDiameterMin || a.estimated_diameter?.kilometers?.estimated_diameter_min || 0,
+            estimatedDiameterMax: a.estimatedDiameterMax || a.estimated_diameter?.kilometers?.estimated_diameter_max || 0,
+            isPotentiallyHazardous: a.isPotentiallyHazardous || a.is_potentially_hazardous_asteroid || false,
+          }));
+
           set((prev) => ({
-            asteroids: reset ? asteroids : [...prev.asteroids, ...asteroids],
+            asteroids: reset ? asteroidsWithApproaches : [...prev.asteroids, ...asteroidsWithApproaches],
             total,
             hasMore: pagination.hasNextPage !== false,
             page: pagination.page || page,
@@ -226,10 +235,11 @@ export const useAsteroidsStore = create<AsteroidsState>()(
         try {
           const favorite = await asteroidsAPI.addFavorite(asteroidId, notes);
           set((prev) => {
+            const currentIds = Array.isArray(prev.favoriteIds) ? prev.favoriteIds : [];
             const newFavorites = [...prev.favorites, favorite];
-            const newFavoriteIds = prev.favoriteIds.includes(asteroidId)
-              ? prev.favoriteIds
-              : [...prev.favoriteIds, asteroidId];
+            const newFavoriteIds = currentIds.includes(asteroidId)
+              ? currentIds
+              : [...currentIds, asteroidId];
             return {
               favorites: newFavorites,
               favoriteIds: newFavoriteIds,
@@ -261,7 +271,8 @@ export const useAsteroidsStore = create<AsteroidsState>()(
       },
 
       isFavorite: (asteroidId: string) => {
-        return get().favoriteIds.includes(asteroidId);
+        const favoriteIds = get().favoriteIds;
+        return Array.isArray(favoriteIds) && favoriteIds.includes(asteroidId);
       },
 
       // Actions - Detail

@@ -55,7 +55,33 @@ export default function NEOFeed() {
   }, [debouncedSearch]);
 
   // Display results
-  const displayAsteroids = (searchQuery ? searchResults : asteroids) || [];
+  const displayAsteroids = useMemo(() => {
+    const source = searchQuery ? searchResults : asteroids;
+    if (!source || source.length === 0) return [];
+
+    // Frontend sorting since backend doesn't apply sortBy
+    return [...source].sort((a, b) => {
+      switch (sortBy) {
+        case 'closest':
+          // Sort by miss distance (first close approach)
+          const aDist = a.closeApproaches?.[0]?.missDistanceKm ?? Infinity;
+          const bDist = b.closeApproaches?.[0]?.missDistanceKm ?? Infinity;
+          return aDist - bDist;
+        case 'largest':
+          return (b.estimatedDiameterMax || 0) - (a.estimatedDiameterMax || 0);
+        case 'fastest':
+          return (b.closeApproaches?.[0]?.velocityKmS || 0) - (a.closeApproaches?.[0]?.velocityKmS || 0);
+        case 'most-dangerous':
+          if (a.isPotentiallyHazardous !== b.isPotentiallyHazardous) {
+            return a.isPotentiallyHazardous ? -1 : 1;
+          }
+          return (a.closeApproaches?.[0]?.missDistanceKm ?? Infinity) - (b.closeApproaches?.[0]?.missDistanceKm ?? Infinity);
+        default:
+          return 0;
+      }
+    });
+  }, [searchQuery, searchResults, asteroids, sortBy]);
+
   const totalPages = Math.ceil(total / pageSize);
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -203,17 +229,17 @@ export default function NEOFeed() {
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
               >
                 {displayAsteroids.map((asteroid) => (
-                  <motion.div key={asteroid.id} variants={itemVariants}>
+                  <motion.div key={asteroid.nasaId || asteroid.id} variants={itemVariants}>
                     <AsteroidCard
                       name={asteroid.name}
-                      diameterKm={asteroid.diameterKm || 0}
-                      speedKmH={asteroid.speed || 0}
-                      missDistanceKm={asteroid.missDistance || 0}
-                      hazardous={asteroid.is_potentially_hazardous_asteroid}
-                      nextApproachDate={asteroid.nextCloseApproach?.close_approach_date}
-                      isFavorite={isFavorite(asteroid.id)}
-                      onFavoriteClick={() => handleFavoriteClick(asteroid.id)}
-                      onClick={() => handleAsteroidClick(asteroid.id)}
+                      diameterKm={asteroid.estimatedDiameterMax || asteroid.estimatedDiameterMin || 0}
+                      speedKmH={asteroid.closeApproaches?.[0]?.velocityKmS ? asteroid.closeApproaches[0].velocityKmS * 3600 : 0}
+                      missDistanceKm={asteroid.closeApproaches?.[0]?.missDistanceKm || 0}
+                      hazardous={asteroid.isPotentiallyHazardous || asteroid.is_potentially_hazardous_asteroid || false}
+                      nextApproachDate={asteroid.closeApproaches?.[0]?.date}
+                      isFavorite={isFavorite(asteroid.nasaId || asteroid.id)}
+                      onFavoriteClick={() => handleFavoriteClick(asteroid.nasaId || asteroid.id)}
+                      onClick={() => handleAsteroidClick(asteroid.nasaId || asteroid.id)}
                     />
                   </motion.div>
                 ))}

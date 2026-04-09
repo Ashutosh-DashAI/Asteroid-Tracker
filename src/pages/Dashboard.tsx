@@ -140,7 +140,7 @@ export default function Dashboard() {
         {stats && (
           <HazardPieChart
             hazardousCount={stats.hazardousCount}
-            nonHazardousCount={stats.totalCount - stats.hazardousCount}
+            nonHazardousCount={Math.max(0, (stats.totalAsteroids || 0) - stats.hazardousCount)}
           />
         )}
       </div>

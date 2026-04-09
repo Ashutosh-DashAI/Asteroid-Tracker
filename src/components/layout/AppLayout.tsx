@@ -1,6 +1,6 @@
-import { Bell, Globe, LayoutDashboard, Menu, MessageSquare, Radar, Star } from 'lucide-react';
+import { Bell, Globe, LayoutDashboard, Menu, MessageSquare, Radar, Star, Github } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import StarfieldBackground from '@/components/ui/StarfieldBackground';
 import DataTicker from '@/components/ui/DataTicker';
@@ -32,7 +32,7 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <StarfieldBackground />
       <aside className={`glass-card fixed bottom-0 left-0 top-0 z-40 w-60 p-4 transition ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="mb-6 text-xl font-bold text-cyan-300">☄ COSMIC WATCH</div>
@@ -44,7 +44,18 @@ export default function AppLayout() {
           ))}
         </div>
         <div className="absolute bottom-4 left-4 right-4">
-          <div className="mb-2 rounded-lg bg-white/5 p-2 text-sm">{user?.name}</div>
+          <div className="mb-2 rounded-lg bg-white/5 p-2 text-sm">
+            {user?.name || 'Ashutosh Dash'}
+          </div>
+          <a
+            href="https://github.com/Ashutosh-DashAI/Asteroid-Tracker"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-sm text-slate-300 mb-2"
+          >
+            <Github size={16} />
+            <span>View on GitHub</span>
+          </a>
           <button
             onClick={handleLogout}
             className="w-full rounded-lg border border-red-400/30 py-2 text-red-300 hover:bg-red-400/10 transition-colors"
@@ -53,16 +64,16 @@ export default function AppLayout() {
           </button>
         </div>
       </aside>
-      <main className="md:pl-60">
-        <div className="sticky top-0 z-30 border-b border-cyan-400/10 bg-[#0a0a0f]/95 px-3 py-3 backdrop-blur">
+      <div className="flex flex-col flex-1 md:pl-60 min-h-screen">
+        <div className="sticky top-0 z-30 border-b border-cyan-400/10 bg-[#0a0a0f]/95 px-3 py-3 backdrop-blur flex-shrink-0">
           <div className="mb-2 flex items-center justify-between">
             <button onClick={() => setOpen((v) => !v)} className="rounded p-2 hover:bg-white/10 md:hidden"><Menu /></button>
             <NotificationBell />
           </div>
           <DataTicker items={ticker} />
         </div>
-        <div className="p-4 md:p-6"><Outlet /></div>
-      </main>
+        <div className="flex-1 p-4 md:p-6 overflow-y-auto"><Outlet /></div>
+      </div>
     </div>
   );
 }

@@ -15,15 +15,22 @@ interface AsteroidCardProps {
 
 export const AsteroidCard: React.FC<AsteroidCardProps> = ({
   name,
-  diameterKm = 0,
-  speedKmH = 0,
-  missDistanceKm = 0,
+  diameterKm,
+  speedKmH,
+  missDistanceKm,
   hazardous,
   nextApproachDate,
   isFavorite = false,
   onFavoriteClick,
   onClick,
 }) => {
+  const formatValue = (val?: number, unit?: string, decimals = 2) => {
+    if (val == null || val === 0) return '—';
+    if (unit === 'km') return `${val.toFixed(0)} km`;
+    if (unit === 'km/h') return `${val.toFixed(1)} km/h`;
+    return `${val.toFixed(decimals)} ${unit || ''}`;
+  };
+
   return (
     <div
       onClick={onClick}
@@ -63,23 +70,23 @@ export const AsteroidCard: React.FC<AsteroidCardProps> = ({
       <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
         <div className="bg-slate-800/50 rounded p-2">
           <p className="text-slate-500 text-xs mb-1">Diameter</p>
-          <p className="text-blue-400 font-semibold">{diameterKm.toFixed(2)} km</p>
+          <p className="text-blue-400 font-semibold">{formatValue(diameterKm, 'km')}</p>
         </div>
         <div className="bg-slate-800/50 rounded p-2">
           <p className="text-slate-500 text-xs mb-1">Speed</p>
           <p className="font-semibold text-purple-400 flex items-center gap-1">
             <Zap size={12} />
-            {speedKmH.toFixed(1)} km/h
+            {formatValue(speedKmH, 'km/h', 1)}
           </p>
         </div>
         <div className="bg-slate-800/50 rounded p-2">
           <p className="text-slate-500 text-xs mb-1">Miss Distance</p>
-          <p className="text-cyan-400 font-semibold">{missDistanceKm.toFixed(0)} km</p>
+          <p className="text-cyan-400 font-semibold">{formatValue(missDistanceKm, 'km', 0)}</p>
         </div>
         <div className="bg-slate-800/50 rounded p-2">
           <p className="text-slate-500 text-xs mb-1">Approach</p>
           <p className="text-slate-300 font-semibold text-xs">
-            {nextApproachDate ? new Date(nextApproachDate).toLocaleDateString() : 'N/A'}
+            {nextApproachDate ? new Date(nextApproachDate).toLocaleDateString() : '—'}
           </p>
         </div>
       </div>
