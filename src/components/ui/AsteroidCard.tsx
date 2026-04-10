@@ -1,5 +1,6 @@
 import React from 'react';
 import { Star, Zap, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface AsteroidCardProps {
   name: string;
@@ -34,65 +35,103 @@ export const AsteroidCard: React.FC<AsteroidCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className="group relative bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-xl border border-slate-700/50 rounded-lg p-4 hover:border-blue-500/50 transition-all duration-300 cursor-pointer overflow-hidden"
+      className="group relative rounded-2xl p-5 cursor-pointer overflow-hidden transition-all duration-250"
+      style={{
+        background: 'var(--bg-deep)',
+        border: hazardous ? '1px solid var(--hazard-dim)' : '1px solid #ffffff08',
+        boxShadow: hazardous ? '0 0 30px #ff444410' : 'var(--glow-card)',
+        transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-4px) scale(1.01)';
+        e.currentTarget.style.borderColor = '#ffffff18';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0) scale(1)';
+        e.currentTarget.style.borderColor = hazardous ? 'var(--hazard-dim)' : '#ffffff08';
+      }}
     >
-      {/* Glow effect on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
+      {/* Hazard badge — top right */}
+      {hazardous && (
+        <div
+          className="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-bold"
+          style={{
+            background: 'var(--hazard-dim)',
+            color: 'var(--hazard)',
+            border: '1px solid var(--hazard-dim)',
+            letterSpacing: '0.08em',
+          }}
+        >
+          ⚠ HAZARDOUS
+        </div>
+      )}
 
       {/* Header with name and favorite button */}
-      <div className="flex justify-between items-start mb-3 gap-2">
-        <h3 className="text-sm md:text-base font-semibold text-white flex-1 truncate group-hover:text-blue-300 transition-colors">
+      <div className="flex justify-between items-start mb-4 gap-2">
+        <h3
+          className="text-sm md:text-base font-semibold flex-1 truncate transition-colors duration-150"
+          style={{ color: 'var(--text-primary)' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cyan)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
+        >
           {name}
         </h3>
-        <button
+        <motion.button
           onClick={(e) => {
             e.stopPropagation();
             onFavoriteClick?.();
           }}
-          className="flex-shrink-0 p-1.5 hover:bg-white/10 rounded transition-colors"
+          className="flex-shrink-0 p-1.5 rounded-md transition-colors duration-150"
+          style={{ color: isFavorite ? '#facc15' : 'var(--text-dim)' }}
+          whileHover={{ scale: 1.2 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 15 }}
         >
           <Star
             size={16}
-            className={`transition-all ${isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-slate-400 hover:text-yellow-400'}`}
+            className={`transition-all duration-200 ${isFavorite ? 'fill-yellow-400 text-yellow-400' : ''}`}
           />
-        </button>
+        </motion.button>
       </div>
 
-      {/* Hazard Badge */}
-      {hazardous && (
-        <div className="inline-flex items-center gap-1 mb-3 px-2 py-1 bg-red-500/20 border border-red-500/50 rounded text-xs text-red-400 font-semibold">
-          <AlertCircle size={12} />
-          Hazardous
-        </div>
-      )}
-
       {/* Properties Grid */}
-      <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
-        <div className="bg-slate-800/50 rounded p-2">
-          <p className="text-slate-500 text-xs mb-1">Diameter</p>
-          <p className="text-blue-400 font-semibold">{formatValue(diameterKm, 'km')}</p>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="rounded-lg p-2.5" style={{ background: 'var(--bg-surface)' }}>
+          <p className="mb-1" style={{ color: 'var(--text-dim)', fontSize: '10px' }}>Diameter</p>
+          <p className="font-semibold" style={{ color: 'var(--cyan)' }}>
+            {formatValue(diameterKm, 'km')}
+          </p>
         </div>
-        <div className="bg-slate-800/50 rounded p-2">
-          <p className="text-slate-500 text-xs mb-1">Speed</p>
-          <p className="font-semibold text-purple-400 flex items-center gap-1">
-            <Zap size={12} />
+        <div className="rounded-lg p-2.5" style={{ background: 'var(--bg-surface)' }}>
+          <p className="mb-1" style={{ color: 'var(--text-dim)', fontSize: '10px' }}>Speed</p>
+          <p className="font-semibold flex items-center gap-1" style={{ color: 'var(--cyan)' }}>
+            <Zap size={10} />
             {formatValue(speedKmH, 'km/h', 1)}
           </p>
         </div>
-        <div className="bg-slate-800/50 rounded p-2">
-          <p className="text-slate-500 text-xs mb-1">Miss Distance</p>
-          <p className="text-cyan-400 font-semibold">{formatValue(missDistanceKm, 'km', 0)}</p>
+        <div className="rounded-lg p-2.5" style={{ background: 'var(--bg-surface)' }}>
+          <p className="mb-1" style={{ color: 'var(--text-dim)', fontSize: '10px' }}>Miss Distance</p>
+          <p className="font-semibold" style={{ color: 'var(--cyan)' }}>
+            {formatValue(missDistanceKm, 'km', 0)}
+          </p>
         </div>
-        <div className="bg-slate-800/50 rounded p-2">
-          <p className="text-slate-500 text-xs mb-1">Approach</p>
-          <p className="text-slate-300 font-semibold text-xs">
+        <div className="rounded-lg p-2.5" style={{ background: 'var(--bg-surface)' }}>
+          <p className="mb-1" style={{ color: 'var(--text-dim)', fontSize: '10px' }}>Approach</p>
+          <p className="font-semibold" style={{ color: 'var(--text-secondary)', fontSize: '11px' }}>
             {nextApproachDate ? new Date(nextApproachDate).toLocaleDateString() : '—'}
           </p>
         </div>
       </div>
 
       {/* Bottom border glow */}
-      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500/0 via-blue-500/50 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div
+        className="absolute bottom-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{
+          background: hazardous
+            ? 'linear-gradient(90deg, transparent, var(--hazard), transparent)'
+            : 'linear-gradient(90deg, transparent, var(--cyan), transparent)',
+        }}
+      />
     </div>
   );
 };

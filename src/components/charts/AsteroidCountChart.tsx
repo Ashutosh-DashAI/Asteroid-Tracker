@@ -1,5 +1,7 @@
 import React from 'react';
 import {
+  AreaChart,
+  Area,
   LineChart,
   Line,
   XAxis,
@@ -7,7 +9,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from 'recharts';
 
 interface AsteroidCountChartProps {
@@ -18,37 +19,63 @@ interface AsteroidCountChartProps {
   title?: string;
 }
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div
+      className="rounded-lg px-3 py-2 text-sm"
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--cyan)',
+        boxShadow: 'var(--glow-cyan)',
+      }}
+    >
+      <p style={{ color: 'var(--text-secondary)' }}>{label}</p>
+      <p className="font-bold" style={{ color: 'var(--cyan)' }}>
+        {payload[0].value} asteroids
+      </p>
+    </div>
+  );
+};
+
 export const AsteroidCountChart: React.FC<AsteroidCountChartProps> = ({
   data,
   title = 'Asteroid Count Over Time',
 }) => {
   return (
-    <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6">
-      <h3 className="text-lg font-bold text-white mb-4">{title}</h3>
+    <div
+      className="rounded-2xl p-6"
+      style={{
+        background: 'var(--bg-deep)',
+        border: '1px solid #ffffff08',
+        boxShadow: 'var(--glow-card)',
+      }}
+    >
+      <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>{title}</h3>
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-          <XAxis dataKey="date" stroke="#94a3b8" style={{ fontSize: '12px' }} />
-          <YAxis stroke="#94a3b8" style={{ fontSize: '12px' }} />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: '#1e293b',
-              border: '1px solid #475569',
-              borderRadius: '8px',
-              color: '#e2e8f0',
-            }}
-          />
-          <Legend />
-          <Line
+        <AreaChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+          <defs>
+            <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#00d4ff" stopOpacity={0.12} />
+              <stop offset="100%" stopColor="#00d4ff" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+          <XAxis dataKey="date" stroke="#7a9bbf" style={{ fontSize: '12px' }} tickLine={false} axisLine={false} />
+          <YAxis stroke="#7a9bbf" style={{ fontSize: '12px' }} tickLine={false} axisLine={false} />
+          <Tooltip content={<CustomTooltip />} />
+          <Area
             type="monotone"
             dataKey="count"
-            stroke="#60a5fa"
+            stroke="#00d4ff"
             strokeWidth={2}
-            dot={{ fill: '#60a5fa', r: 4 }}
-            activeDot={{ r: 6 }}
-            name="Asteroids"
+            fill="url(#areaGradient)"
+            dot={false}
+            activeDot={{ r: 5, fill: '#00d4ff', stroke: 'var(--bg-deep)', strokeWidth: 2 }}
+            animationDuration={1200}
+            animationEasing="ease-out"
           />
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

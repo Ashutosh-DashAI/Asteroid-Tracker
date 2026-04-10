@@ -1,0 +1,39 @@
+/* ============================================
+   ASTEROID TRACKER — Design Tokens
+   Visual bar: Linear.app meets NASA Eyes
+   ============================================ */
+
+:root {
+  /* Depth layers */
+  --bg-void:        #020408;
+  --bg-deep:        #060d18;
+  --bg-surface:     #0a1628;
+  --bg-raised:      #0f2040;
+
+  /* Brand */
+  --cyan:           #00d4ff;
+  --cyan-dim:       #00d4ff22;
+  --purple:         #7c3aed;
+  --purple-dim:     #7c3aed22;
+
+  /* Semantic */
+  --hazard:         #ff4444;
+  --hazard-dim:     #ff444420;
+  --safe:           #00ff88;
+  --safe-dim:       #00ff8820;
+  --warn:           #ffaa00;
+
+  /* Text */
+  --text-primary:   #e8f4ff;
+  --text-secondary: #7a9bbf;
+  --text-dim:       #3a5a7a;
+
+  /* Glow effects */
+  --glow-cyan:   0 0 20px #00d4ff40, 0 0 60px #00d4ff20;
+  --glow-hazard: 0 0 20px #ff444440, 0 0 60px #ff444420;
+  --glow-card:   0 1px 0 #ffffff08 inset, 0 0 0 1px #ffffff05;
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+}

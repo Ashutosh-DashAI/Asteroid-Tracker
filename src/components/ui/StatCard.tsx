@@ -1,13 +1,17 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { LineChart, Line, ResponsiveContainer } from 'recharts';
+import { useCountUp } from '@/hooks/useCountUp';
 
 interface StatCardProps {
   title: string;
   value: string | number;
   unit?: string;
   icon?: React.ReactNode;
-  trend?: number; // percentage
+  trend?: number;
   delay?: number;
+  variant?: 'default' | 'hazardous';
+  sparklineData?: number[];
   className?: string;
 }
 
@@ -18,59 +22,112 @@ export const StatCard: React.FC<StatCardProps> = ({
   icon,
   trend,
   delay = 0,
+  variant = 'default',
+  sparklineData,
   className = '',
 }) => {
+  const numericValue = typeof value === 'number' ? value : parseFloat(String(value)) || 0;
+  const animatedValue = useCountUp(Math.round(numericValue), 800, typeof value === 'number');
+
+  const isHazardous = variant === 'hazardous';
+
   const variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: {
-        duration: 0.5,
-        delay,
-      },
+      transition: { duration: 0.5, delay },
     },
   };
+
+  // Generate tiny sparkline data if not provided
+  const sparkData = sparklineData || Array.from({ length: 7 }, () => Math.random() * numericValue * 0.3 + numericValue * 0.7);
 
   return (
     <motion.div
       variants={variants}
       initial="hidden"
       animate="visible"
-      className={`relative group ${className}`}
+      className={`group ${className}`}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-      <div className="relative bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6 overflow-hidden group-hover:border-slate-600/80 transition-all duration-300">
-        {/* Animated background gradient */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-blue-500/20 transition-all duration-500" />
-
+      <div
+        className="relative overflow-hidden rounded-2xl p-6 transition-all duration-200"
+        style={{
+          background: 'var(--bg-deep)',
+          border: '1px solid #ffffff08',
+          boxShadow: 'var(--glow-card)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = '#ffffff15';
+          e.currentTarget.style.transform = 'translateY(-2px)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = '#ffffff08';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }}
+      >
         <div className="relative z-10">
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
-              <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-2">{title}</p>
+              <p
+                className="text-sm font-medium uppercase tracking-wider mb-2"
+                style={{ color: 'var(--text-secondary)', letterSpacing: '0.05em' }}
+              >
+                {title}
+              </p>
               <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  {value}
+                <h3
+                  className="text-5xl font-bold"
+                  style={{
+                    color: isHazardous ? 'var(--hazard)' : 'var(--cyan)',
+                    textShadow: isHazardous ? 'var(--glow-hazard)' : 'var(--glow-cyan)',
+                  }}
+                >
+                  {typeof value === 'number' ? animatedValue : value}
                 </h3>
-                {unit && <span className="text-slate-400 text-sm">{unit}</span>}
+                {unit && (
+                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    {unit}
+                  </span>
+                )}
               </div>
             </div>
-            {icon && <div className="text-blue-400 opacity-50 group-hover:opacity-100 transition-opacity">{icon}</div>}
+            {icon && (
+              <div
+                className="opacity-40 group-hover:opacity-100 transition-opacity duration-200"
+                style={{ color: isHazardous ? 'var(--hazard)' : 'var(--cyan)' }}
+              >
+                {icon}
+              </div>
+            )}
           </div>
 
           {trend !== undefined && (
-            <div className={`text-xs font-semibold ${trend > 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <div
+              className="text-xs font-semibold"
+              style={{ color: trend > 0 ? 'var(--safe)' : 'var(--hazard)' }}
+            >
               {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}% from last week
             </div>
           )}
         </div>
 
-        {/* Border glow effect */}
-        <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-50 transition-opacity duration-500 pointer-events-none">
-          <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-to-br from-blue-500/20 to-transparent rounded-tl-xl" />
-          <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-tl from-purple-500/20 to-transparent rounded-br-xl" />
-        </div>
+        {/* Sparkline at bottom */}
+        {numericValue > 0 && (
+          <div className="mt-2 h-[40px] opacity-30 group-hover:opacity-60 transition-opacity duration-200">
+            <ResponsiveContainer width="100%" height={40}>
+              <LineChart data={sparkData.map((v, i) => ({ v }))}>
+                <Line
+                  type="monotone"
+                  dataKey="v"
+                  stroke={isHazardous ? 'var(--hazard)' : 'var(--cyan)'}
+                  strokeWidth={1.5}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
     </motion.div>
   );

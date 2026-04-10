@@ -68,6 +68,11 @@ export interface CloseApproachData {
     miles: string;
   };
   orbiting_body: string;
+  // Computed fields
+  velocityKmS?: number;
+  velocityKmH?: number;
+  missDistanceKm?: number;
+  date?: string;
 }
 
 export interface EstimatedDiameter {
@@ -118,12 +123,17 @@ export interface OrbitalData {
 export interface Asteroid {
   id: string;
   neo_reference_id: string;
+  nasaId?: string;
   name: string;
   nasa_jpl_url: string;
   absolute_magnitude_h: number;
   estimated_diameter: EstimatedDiameter;
+  estimatedDiameterMin?: number;
+  estimatedDiameterMax?: number;
   is_potentially_hazardous_asteroid: boolean;
+  isPotentiallyHazardous?: boolean;
   close_approach_data: CloseApproachData[];
+  closeApproaches?: CloseApproachData[];
   orbital_data?: OrbitalData;
   is_sentry_object: boolean;
   isFavorite?: boolean;

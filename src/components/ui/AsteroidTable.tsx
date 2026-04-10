@@ -7,61 +7,90 @@ interface AsteroidTableProps {
   isLoading?: boolean;
 }
 
+const fmt = (val: number | undefined | null, decimals = 2, unit = '', fallback = '—') => {
+  if (val == null || val === 0) return fallback;
+  return `${val.toFixed(decimals)}${unit ? ' ' + unit : ''}`;
+};
+
 export const AsteroidTable: React.FC<AsteroidTableProps> = ({
   asteroids,
   onRowClick,
   isLoading = false,
 }) => {
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-700/50">
+    <div
+      className="overflow-x-auto rounded-2xl"
+      style={{
+        background: 'var(--bg-deep)',
+        border: '1px solid #ffffff08',
+        boxShadow: 'var(--glow-card)',
+      }}
+    >
       <table className="w-full text-sm">
         <thead>
-          <tr className="bg-slate-800/50 border-b border-slate-700/50">
-            <th className="px-4 py-3 text-left font-semibold text-slate-300">Name</th>
-            <th className="px-4 py-3 text-right font-semibold text-slate-300">Diameter (km)</th>
-            <th className="px-4 py-3 text-right font-semibold text-slate-300">Speed (km/h)</th>
-            <th className="px-4 py-3 text-right font-semibold text-slate-300">Miss Distance (km)</th>
-            <th className="px-4 py-3 text-center font-semibold text-slate-300">Hazard</th>
-            <th className="px-4 py-3 text-left font-semibold text-slate-300">Next Approach</th>
+          <tr style={{ borderBottom: '1px solid #ffffff08' }}>
+            <th className="px-4 py-3 text-left font-semibold" style={{ color: 'var(--text-secondary)' }}>Name</th>
+            <th className="px-4 py-3 text-right font-semibold" style={{ color: 'var(--text-secondary)' }}>Diameter</th>
+            <th className="px-4 py-3 text-right font-semibold" style={{ color: 'var(--text-secondary)' }}>Speed</th>
+            <th className="px-4 py-3 text-right font-semibold" style={{ color: 'var(--text-secondary)' }}>Miss Distance</th>
+            <th className="px-4 py-3 text-center font-semibold" style={{ color: 'var(--text-secondary)' }}>Hazard</th>
+            <th className="px-4 py-3 text-left font-semibold" style={{ color: 'var(--text-secondary)' }}>Next Approach</th>
           </tr>
         </thead>
         <tbody>
-          {asteroids.map((asteroid, index) => (
-            <tr
-              key={asteroid.id || index}
-              onClick={() => onRowClick?.(asteroid)}
-              className="border-b border-slate-700/50 hover:bg-slate-800/30 transition-colors cursor-pointer"
-            >
-              <td className="px-4 py-3 font-medium text-blue-400 max-w-xs truncate hover:text-blue-300">
-                {asteroid.name}
-              </td>
-              <td className="px-4 py-3 text-right text-slate-300">
-                {asteroid.diameterKm?.toFixed(2) || 'N/A'} km
-              </td>
-              <td className="px-4 py-3 text-right text-purple-400 font-medium">
-                {asteroid.speed?.toFixed(1) || 'N/A'} km/h
-              </td>
-              <td className="px-4 py-3 text-right text-cyan-400">
-                {asteroid.missDistance?.toFixed(0) || 'N/A'} km
-              </td>
-              <td className="px-4 py-3 text-center">
-                {asteroid.is_potentially_hazardous_asteroid ? (
-                  <span className="inline-block px-2 py-1 bg-red-500/20 border border-red-500/50 text-red-400 text-xs font-semibold rounded">
-                    Yes
-                  </span>
-                ) : (
-                  <span className="inline-block px-2 py-1 bg-green-500/20 border border-green-500/50 text-green-400 text-xs font-semibold rounded">
-                    No
-                  </span>
-                )}
-              </td>
-              <td className="px-4 py-3 text-slate-400 text-xs">
-                {asteroid.nextCloseApproach?.close_approach_date
-                  ? new Date(asteroid.nextCloseApproach.close_approach_date).toLocaleDateString()
-                  : 'N/A'}
-              </td>
-            </tr>
-          ))}
+          {asteroids.map((asteroid, index) => {
+            const diameterKm = asteroid.estimatedDiameterMax || asteroid.estimatedDiameterMin;
+            const speedKmH = asteroid.closeApproaches?.[0]?.velocityKmS
+              ? asteroid.closeApproaches[0].velocityKmS * 3600
+              : undefined;
+            const missDistKm = asteroid.closeApproaches?.[0]?.missDistanceKm;
+            const isHazardous = asteroid.isPotentiallyHazardous || asteroid.is_potentially_hazardous_asteroid || false;
+            const approachDate = asteroid.closeApproaches?.[0]?.date || asteroid.nextCloseApproach?.close_approach_date;
+
+            return (
+              <tr
+                key={asteroid.nasaId || asteroid.id || index}
+                onClick={() => onRowClick?.(asteroid)}
+                className="cursor-pointer transition-colors duration-150"
+                style={{ borderBottom: '1px solid #ffffff05' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-surface)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <td className="px-4 py-3 font-medium max-w-xs truncate" style={{ color: 'var(--cyan)' }}>
+                  {asteroid.name}
+                </td>
+                <td className="px-4 py-3 text-right font-semibold" style={{ color: 'var(--cyan)' }}>
+                  {fmt(diameterKm, diameterKm && diameterKm < 1 ? 0 : 1, 'km')}
+                </td>
+                <td className="px-4 py-3 text-right font-semibold" style={{ color: 'var(--cyan)' }}>
+                  {fmt(speedKmH, 0, 'km/h')}
+                </td>
+                <td className="px-4 py-3 text-right font-semibold" style={{ color: 'var(--cyan)' }}>
+                  {fmt(missDistKm, 0, 'km')}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  {isHazardous ? (
+                    <span
+                      className="inline-block px-2 py-1 rounded-full text-[10px] font-bold"
+                      style={{ background: 'var(--hazard-dim)', color: 'var(--hazard)', letterSpacing: '0.08em' }}
+                    >
+                      ⚠ HAZARDOUS
+                    </span>
+                  ) : (
+                    <span
+                      className="inline-block px-2 py-1 rounded-full text-[10px] font-bold"
+                      style={{ background: 'var(--safe-dim)', color: 'var(--safe)' }}
+                    >
+                      SAFE
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  {approachDate ? new Date(approachDate).toLocaleDateString() : '—'}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

@@ -125,15 +125,16 @@ export const useAsteroidsStore = create<AsteroidsState>()(
           };
 
           const response = await asteroidsAPI.getFeed(params);
-          
-          // Extract data and pagination from response
-          const asteroids = response.data || response.asteroids || [];
-          const pagination = response.pagination || {};
-          const total = pagination.total || 0;
+
+          // Backend returns { data: [...], pagination: {...}, statistics: {...} }
+          const asteroids: Asteroid[] = response.data || [];
+          const pagination = (response as any).pagination || {};
+          const total = pagination.total || response.total || 0;
 
           // Build computed closeApproaches array from response
           const asteroidsWithApproaches = asteroids.map((a: any) => ({
             ...a,
+            nasaId: a.nasaId || a.neo_reference_id,
             closeApproaches: a.closeApproaches || a.close_approach_data || [],
             estimatedDiameterMin: a.estimatedDiameterMin || a.estimated_diameter?.kilometers?.estimated_diameter_min || 0,
             estimatedDiameterMax: a.estimatedDiameterMax || a.estimated_diameter?.kilometers?.estimated_diameter_max || 0,
@@ -191,9 +192,9 @@ export const useAsteroidsStore = create<AsteroidsState>()(
         set({ searchLoading: true, error: null });
         try {
           const response = await asteroidsAPI.search(query);
-          
-          // Extract data from response
-          const searchResults = response.data || response.asteroids || [];
+
+          // Backend search returns { results: [...], count: N } or { data: [...], pagination: {...} }
+          const searchResults: Asteroid[] = response.results || response.data || [];
           
           set({
             searchResults,

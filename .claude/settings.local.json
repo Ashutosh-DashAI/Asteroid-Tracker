@@ -2,7 +2,18 @@
   "permissions": {
     "allow": [
       "Bash(wc -l /d/Astra/src/**/*.ts)",
-      "Bash(wc -l /d/Astra-Frontend/src/**/*.ts)"
+      "Bash(wc -l /d/Astra-Frontend/src/**/*.ts)",
+      "Bash(ls:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm list:*)",
+      "Bash(npm install:*)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(bun run:*)",
+      "Bash(curl -s http://localhost:3000/health)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //F //PID 13532)"
     ]
   }
 }

@@ -13,7 +13,7 @@ const AsteroidDetail = React.lazy(() => import('@/pages/AsteroidDetail'));
 const Watchlist = React.lazy(() => import('@/pages/Watchlist'));
 const Alerts = React.lazy(() => import('@/pages/Alerts'));
 const OrbitViewer = React.lazy(() => import('@/pages/OrbitViewer'));
-const Community = React.lazy(() => import('@/pages/Community'));
+const CloseApproaches = React.lazy(() => import('@/pages/CloseApproaches'));
 
 /**
  * ProtectedRoute - Only allow access if authenticated
@@ -112,7 +112,8 @@ export default function AppRouter() {
           <Route path="/watchlist" element={<AnimatedPage><Watchlist /></AnimatedPage>} />
           <Route path="/alerts" element={<AnimatedPage><Alerts /></AnimatedPage>} />
           <Route path="/orbit" element={<AnimatedPage><OrbitViewer /></AnimatedPage>} />
-          <Route path="/community" element={<AnimatedPage><Community /></AnimatedPage>} />
+          <Route path="/community" element={<AnimatedPage><CloseApproaches /></AnimatedPage>} />
+          <Route path="/close-approaches" element={<AnimatedPage><CloseApproaches /></AnimatedPage>} />
         </Route>
 
         {/* Default Routes */}
