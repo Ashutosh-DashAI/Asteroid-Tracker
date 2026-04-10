@@ -4,6 +4,7 @@ import helmet from "helmet";
 import { createServer } from "http";
 import env from "./config/env";
 import logger from "./utils/logger";
+import prisma from "./db";
 
 // Import routes
 import authRoutes from "./routes/auth.routes";

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { transformNASAObject } from '../nasaService';
+import { transformNASAObject } from '../nasa.service';
 
 describe('NASA Service - transformNASAObject', () => {
   it('transforms raw NASA object correctly', () => {

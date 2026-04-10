@@ -4,7 +4,7 @@ import { authenticateToken } from "../middleware/auth.middleware";
 import { validate } from "../middleware/validate";
 import { createWatchSchema, updateWatchSchema, watchParamSchema } from "../validators/watchlist.schema";
 import { sendError, sendSuccess } from "../utils/sendResponse";
-import { fetchAsteroidById } from "../services/nasaService";
+import { nasaService } from "../services/nasa.service";
 import { syncNEOFeedToDB } from "../services/syncService";
 
 const router = Router();
@@ -46,7 +46,7 @@ router.post("/", validate(createWatchSchema), async (req, res, next) => {
 
     let asteroid = await prisma.asteroid.findUnique({ where: { nasaId } });
     if (!asteroid) {
-      await fetchAsteroidById(nasaId);
+      await nasaService.lookupAsteroid(nasaId);
       await syncNEOFeedToDB(7);
       asteroid = await prisma.asteroid.findUnique({ where: { nasaId } });
     }

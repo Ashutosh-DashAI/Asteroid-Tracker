@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import prisma from "../db";
-import { fetchNEOFeed } from "./nasaService";
+import { nasaService } from "./nasa.service";
 import { computeRiskScore } from "./riskEngine";
 import { emitNewAlert } from "../config/socket";
 import env from "../config/env";
@@ -12,7 +12,7 @@ export const syncNEOFeedToDB = async (days = 7) => {
   const end = new Date();
   end.setDate(start.getDate() + days);
 
-  const items = await fetchNEOFeed(toDateOnly(start), toDateOnly(end));
+  const items = await nasaService.fetchNearEarthObjectsFeed(toDateOnly(start), toDateOnly(end));
 
   for (const item of items) {
     await prisma.$transaction(async (tx) => {
