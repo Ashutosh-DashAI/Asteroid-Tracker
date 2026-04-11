@@ -74,24 +74,24 @@ Every choice was documented with trade-offs:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        Frontend                              │
-│  React 18 + Vite + TypeScript + TailwindCSS                │
+│                        Frontend                             │
+│  React 18 + Vite + TypeScript + TailwindCSS                 │
 │  Zustand (client state) + TanStack Query v5 (server)        │
 └─────────────────────────────────────────────────────────────┘
                               │
                               │ REST + WebSocket
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                        Backend                               │
-│  Bun + Express 5 + Prisma 7 + PostgreSQL 16                │
-│  JWT Auth + Pino Logging + Zod Validation                  │
+│                        Backend                              │
+│  Bun + Express 5 + Prisma 7 + PostgreSQL 16                 │
+│  JWT Auth + Pino Logging + Zod Validation                   │
 └─────────────────────────────────────────────────────────────┘
                               │
                               │ Cached (1hr TTL)
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                     NASA NeoWs API                          │
-│  Near-Earth Object Web Service                             │
+│  Near-Earth Object Web Service                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
